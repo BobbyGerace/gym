@@ -1,5 +1,11 @@
 import { ParserState } from "./parserState";
-import { takeWhile, whitespace, comment, newLine } from "./util";
+import {
+  takeWhile,
+  whitespace,
+  comment,
+  newLine,
+  parseIdentifier,
+} from "./util";
 
 export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
   const start = state.pos;
@@ -14,12 +20,7 @@ export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
   return true;
 };
 
-export const parseFrontMatterKey = (state: ParserState): string => {
-  const start = state.pos;
-  const key = takeWhile(state, (char) => /[a-zA-Z0-9_]/.test(char));
-  state.pos = start + key.length;
-  return key;
-};
+export const parseFrontMatterKey = parseIdentifier;
 
 export const parseFrontMatterValue = (state: ParserState): string => {
   const start = state.pos;

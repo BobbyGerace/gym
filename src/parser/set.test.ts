@@ -1,0 +1,94 @@
+import { newState } from "./parserState";
+const { parseSet } = require("./set");
+
+const set = newState(
+  `100x2,3,4,5 @10 1:30:00 100m {chains: 123, another} # comment`
+);
+
+test("parseSet should parse set", () => {
+  expect(parseSet(set)).toEqual({
+    weight: 100,
+    reps: [2, 3, 4, 5],
+    rpe: 10,
+    time: { hours: 1, minutes: 30, seconds: 0 },
+    distance: { value: 100, unit: "m" },
+    tags: [{ key: "chains", value: "123" }, { key: "another" }],
+  });
+});
+
+const setWithBodyweight = newState(`bw x 5 @ 10`);
+test("parseSet should parse bodyweight", () => {
+  expect(parseSet(setWithBodyweight)).toEqual({
+    weight: "bw",
+    reps: [5],
+    rpe: 10,
+  });
+});
+
+const setWithShortTime = newState(`1:30 @ 10`);
+test("parseSet should parse short time", () => {
+  expect(parseSet(setWithShortTime)).toEqual({
+    rpe: 10,
+    time: { hours: 0, minutes: 1, seconds: 30 },
+  });
+});
+
+const setWithWhitespace = newState(
+  `100 x 2 , 3 , 4 , 5 @ 10 1 : 30 : 00 100 m { chains : 123 , another } # comment`
+);
+
+test("parseSet should parse set with whitespace", () => {
+  expect(parseSet(setWithWhitespace)).toEqual({
+    weight: 100,
+    reps: [2, 3, 4, 5],
+    rpe: 10,
+    time: { hours: 1, minutes: 30, seconds: 0 },
+    distance: { value: 100, unit: "m" },
+    tags: [{ key: "chains", value: "123" }, { key: "another" }],
+  });
+});
+
+const lotsOfTags = newState(`100x2 {one: a, two_, with-dash: 42}`);
+test("parseSet should parse lots of tags", () => {
+  expect(parseSet(lotsOfTags)).toEqual({
+    weight: 100,
+    reps: [2],
+    tags: [
+      { key: "one", value: "a" },
+      { key: "two_" },
+      { key: "with-dash", value: "42" },
+    ],
+  });
+});
+
+const terms = `100 x2,3,4,5 @10 1:30:00 100m {chains:123,another}`.split(" ");
+const permutations = (terms: string[]): string[][] => {
+  if (terms.length === 1) {
+    return [terms];
+  }
+  const result: string[][] = [];
+  for (let i = 0; i < terms.length; i++) {
+    const term = terms[i];
+    const rest = [...terms.slice(0, i), ...terms.slice(i + 1)];
+    const permutationsOfRest = permutations(rest);
+    for (const permutation of permutationsOfRest) {
+      result.push([term, ...permutation]);
+    }
+  }
+  return result;
+};
+
+test("parseSet should parse all permutations", () => {
+  const perms = permutations(terms);
+  for (const permutation of perms) {
+    const state = newState(permutation.join(" "));
+    expect(parseSet(state)).toEqual({
+      weight: 100,
+      reps: [2, 3, 4, 5],
+      rpe: 10,
+      time: { hours: 1, minutes: 30, seconds: 0 },
+      distance: { value: 100, unit: "m" },
+      tags: [{ key: "chains", value: "123" }, { key: "another" }],
+    });
+  }
+});

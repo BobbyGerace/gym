@@ -46,3 +46,10 @@ export const newLine = (state: ParserState): string => {
   state.col = 1;
   return state.input.slice(start, state.pos);
 };
+
+export const parseIdentifier = (state: ParserState): string => {
+  const start = state.pos;
+  const key = takeWhile(state, (char) => /[a-zA-Z0-9_-]/.test(char));
+  state.pos = start + key.length;
+  return key;
+};

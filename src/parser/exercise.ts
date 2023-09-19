@@ -1,5 +1,6 @@
 import { ParserState } from "./parserState";
 import { comment, newLine, takeWhile, whitespace } from "./util";
+import { Set } from "./set";
 
 export type Exercise = {
   name: string;
@@ -84,46 +85,4 @@ const parsePostfixOperator = (state: ParserState): string | null => {
     return null;
   }
   return operator || null;
-};
-
-type Set = Partial<{
-  weight: number;
-  reps: number;
-  rpe: number;
-  distance: number;
-  time: number;
-  tags: Tag[];
-}>;
-
-type Tag = { key: string; value: string };
-
-const parseSet = (state: ParserState): Set => {
-  whitespace(state);
-  const prefixOperator = parsePrefixOperator(state);
-  if (prefixOperator) {
-    whitespace(state);
-    parseValue(state);
-    const value = parseValue(state);
-    if (!value) {
-      throw new Error(`Expected value, got ${state.input[state.pos]}`);
-    }
-
-    let set: Set = {};
-    if (prefixOperator === "x") set.reps = value;
-    else if (prefixOperator === "@") set.rpe = value;
-    else throw new Error(`Unexpected prefix operator ${prefixOperator}`);
-
-    return { ...set, ...parseSet(state) };
-  } else {
-    const value = parseValue(state);
-    if (!value) {
-      throw new Error(`Expected value, got ${state.input[state.pos]}`);
-    }
-    whitespace(state);
-
-    // TODO: handle infix operators
-    // TODO: handle postfix operators
-    // TODO: handle tags
-    // TODO: handle comments
-  }
 };
