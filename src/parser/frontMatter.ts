@@ -5,14 +5,12 @@ import {
   comment,
   newLine,
   parseIdentifier,
+  expect,
 } from "./util";
 
 export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
-  const start = state.pos;
-  whitespace(state);
   const dashes = takeWhile(state, (char) => char === "-");
   if (dashes.length < 3) {
-    state.pos = start;
     return false;
   }
   whitespace(state);
@@ -22,22 +20,13 @@ export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
 
 export const parseFrontMatterKey = parseIdentifier;
 
-export const parseFrontMatterValue = (state: ParserState): string => {
-  const start = state.pos;
-  const value = takeWhile(state, (char) => !"\n#".includes(char));
-  state.pos = start + value.length;
-  return value;
-};
+export const parseFrontMatterValue = (state: ParserState): string =>
+  takeWhile(state, (char) => !"\n#".includes(char));
 
 export const parseFrontMatterPair = (state: ParserState): [string, string] => {
   const key = parseFrontMatterKey(state);
   whitespace(state);
-  const colon = state.input[state.pos];
-  if (colon !== ":") {
-    throw new Error(`Expected colon, got ${colon}`);
-  }
-  state.pos++;
-  state.col++;
+  expect(state, ":");
   whitespace(state);
   comment(state);
   const value = parseFrontMatterValue(state);
@@ -47,9 +36,7 @@ export const parseFrontMatterPair = (state: ParserState): [string, string] => {
 export const parseFrontMatter = (
   state: ParserState
 ): Record<string, string> => {
-  const start = state.pos;
   if (!parseFrontMatterDelimiter(state)) {
-    state.pos = start;
     return {};
   }
   newLine(state);
@@ -67,6 +54,9 @@ export const parseFrontMatter = (
     comment(state);
     newLine(state);
     whitespace(state);
+  }
+  if (!parseFrontMatterDelimiter(state)) {
+    throw new Error("Expected front matter delimiter");
   }
   return pairs;
 };

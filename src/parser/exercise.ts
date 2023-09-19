@@ -1,18 +1,24 @@
 import { ParserState } from "./parserState";
-import { comment, newLine, takeWhile, whitespace } from "./util";
-import { Set } from "./set";
+import {
+  comment,
+  findNextLineStart,
+  takeWhile,
+  whitespace,
+  expect,
+} from "./util";
+import { Set, parseSet } from "./set";
 
 export type Exercise = {
   name: string;
   sequence: number;
   subsequence: string | null;
   sets: Set[];
+  lineStart: number;
+  lineEnd: number;
 };
 
 const parseSequence = (state: ParserState): number => {
-  const start = state.pos;
   const sequence = takeWhile(state, (char) => /[0-9]/.test(char));
-  state.pos = start + sequence.length;
   return parseInt(sequence);
 };
 
@@ -27,62 +33,54 @@ const parseName = (state: ParserState): string => {
 };
 
 export const parseExercise = (state: ParserState): Exercise => {
+  const lineStart = state.line;
   whitespace(state);
   const sequence = parseSequence(state);
   whitespace(state);
   const subsequence = parseSubsequence(state);
   whitespace(state);
-  if (state.input[state.pos] !== ")") {
-    throw new Error(`Expected ), got ${state.input[state.pos]}`);
-  }
-  state.pos++;
+  expect(state, ")");
+  state.inc();
   whitespace(state);
   const name = parseName(state);
   comment(state);
-  newLine(state);
+
+  findNextLineStart(state);
+
+  const sets: Set[] = [];
+  let lineEnd = state.line;
+  while (true) {
+    if (isNewExercise(state)) {
+      lineEnd = state.line - 1;
+      break;
+    }
+    if (state.isEOF()) break;
+
+    sets.push(parseSet(state));
+    findNextLineStart(state);
+    lineEnd = state.line;
+  }
 
   return {
     name,
     sequence,
     subsequence,
-    sets: [],
+    sets,
+    lineStart,
+    lineEnd,
   };
 };
 
-const prefixOperators = "x@".split("");
-const infixOperators = ":".split("");
-const postfixOperators = ["ft", "mi", "m", "km"];
-
-// handles negatives and decimals
-const parseNumber = (state: ParserState): number => {
-  const start = state.pos;
-  const number = takeWhile(state, (char) => /[0-9.-]/.test(char));
-  state.pos = start + number.length;
-  return parseFloat(number);
-};
-
-const parseValue = (state: ParserState): number => {
-  if (state.input.slice(state.pos, state.pos + 2) === "bw") {
-    state.pos += 2;
-    return 0;
-  }
-  return parseNumber(state);
-};
-
-const parsePrefixOperator = (state: ParserState): string | null => {
-  const operator = takeWhile(state, (char) => prefixOperators.includes(char));
-  return operator || null;
-};
-
-const parseInfixOperator = (state: ParserState): string | null => {
-  const operator = takeWhile(state, (char) => infixOperators.includes(char));
-  return operator || null;
-};
-
-const parsePostfixOperator = (state: ParserState): string | null => {
-  const operator = takeWhile(state, (char) => /[a-zA-Z]/.test(char));
-  if (!postfixOperators.includes(operator)) {
-    return null;
-  }
-  return operator || null;
+const isNewExercise = (state: ParserState): boolean => {
+  let isExercise = false;
+  state.explore((rollback) => {
+    whitespace(state);
+    parseSequence(state);
+    whitespace(state);
+    parseSubsequence(state);
+    whitespace(state);
+    isExercise = state.input[state.pos] === ")";
+    rollback();
+  });
+  return isExercise;
 };

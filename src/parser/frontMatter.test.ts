@@ -10,17 +10,6 @@ test("parseFrontMatterDelimiter should parse ---", () => {
   expect(parseFrontMatterDelimiter(delimiter)).toBe(true);
 });
 
-test("parseFrontMatterDelimiter should correctly set state", () => {
-  const state = newState(` --- `);
-  expect(parseFrontMatterDelimiter(state)).toBe(true);
-  expect(state).toEqual({ input: " --- ", pos: 5, line: 1, col: 6 });
-});
-
-const preWhitespace = newState(`  \t---`);
-test("parseFrontMatterDelimiter should handle whitespace before", () => {
-  expect(parseFrontMatterDelimiter(preWhitespace)).toBe(true);
-});
-
 const postWhitespace = newState(`---  \t`);
 test("parseFrontMatterDelimiter should handle whitespace after", () => {
   expect(parseFrontMatterDelimiter(postWhitespace)).toBe(true);
@@ -75,7 +64,7 @@ test("parseFrontMatter should parse front matter with comments", () => {
   });
 });
 
-const frontMatterWithWeirdSpacing = newState(` --- 
+const frontMatterWithWeirdSpacing = newState(`--- 
   hello : hello_world
     foo   :   bar
   --- `);
@@ -84,4 +73,20 @@ test("parseFrontMatter should parse front matter with weird spacing", () => {
     hello: "hello_world",
     foo: "bar",
   });
+});
+
+const frontMatterWithoutEndDelimiter = newState(`---
+hello: hello_world
+foo: bar
+
+`);
+test("parseFrontMatter should error without end delimiter", () => {
+  expect(() => parseFrontMatter(frontMatterWithoutEndDelimiter)).toThrow();
+});
+
+const frontMatterWithoutColon = newState(`---
+hello there
+---`);
+test("parseFrontMatter should error without colon", () => {
+  expect(() => parseFrontMatter(frontMatterWithoutColon)).toThrow();
 });

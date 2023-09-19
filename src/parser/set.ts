@@ -1,5 +1,5 @@
 import { ParserState } from "./parserState";
-import { takeWhile, whitespace, comment, parseIdentifier } from "./util";
+import { takeWhile, whitespace, expect, parseIdentifier } from "./util";
 
 export type Set = Partial<{
   weight: number | "bw";
@@ -18,12 +18,12 @@ type Tag = { key: string; value?: string };
 const parseNumber = (state: ParserState): number => {
   let num = "";
   if (state.input[state.pos] === "-") {
-    state.pos++;
+    state.inc();
     num += "-";
   }
   num += takeWhile(state, (char) => /[0-9]/.test(char));
   if (state.input[state.pos] === ".") {
-    state.pos++;
+    state.inc();
     num += ".";
     num += takeWhile(state, (char) => /[0-9]/.test(char));
   }
@@ -40,16 +40,13 @@ const parseRpe = (state: ParserState): number => {
   if (state.input[state.pos] !== "@") {
     return NaN;
   }
-  state.pos++;
+  state.inc();
   whitespace(state);
   return parseNumber(state);
 };
 
 const parseReps = (state: ParserState): number[] => {
-  if (state.input[state.pos] !== "x") {
-    throw new Error(`Expected x, got ${state.input[state.pos]}`);
-  }
-  state.pos++;
+  expect(state, "x");
   const reps: number[] = [];
 
   do {
@@ -74,17 +71,14 @@ const parseDistance = (state: ParserState): Distance => {
 const parseTime = (state: ParserState): Time => {
   const hours = parseNumber(state);
   whitespace(state);
-  if (state.input[state.pos] !== ":") {
-    throw new Error(`Expected :, got ${state.input[state.pos]}`);
-  }
-  state.pos++;
+  expect(state, ":");
   whitespace(state);
   const minutes = parseNumber(state);
   whitespace(state);
   if (state.input[state.pos] !== ":") {
     return { hours: 0, minutes: hours, seconds: minutes };
   }
-  state.pos++;
+  state.inc();
   whitespace(state);
   const seconds = parseNumber(state);
   return { hours, minutes, seconds };
@@ -94,17 +88,14 @@ const parseBodyweight = (state: ParserState): "bw" => {
   if (state.input.slice(state.pos, state.pos + 2) !== "bw") {
     throw new Error(`Expected bw, got ${state.input[state.pos]}`);
   }
-  state.pos += 2;
+  state.inc(2);
   return "bw";
 };
 
 const parseWeight = parseNumber;
 
 const parseTag = (state: ParserState): Tag[] => {
-  if (state.input[state.pos] !== "{") {
-    throw new Error(`Expected {, got ${state.input[state.pos]}`);
-  }
-  state.pos++;
+  expect(state, "{");
 
   const tags = [];
   whitespace(state);
@@ -113,7 +104,7 @@ const parseTag = (state: ParserState): Tag[] => {
     const key = parseIdentifier(state);
     whitespace(state);
     if (state.input[state.pos] === ":") {
-      state.pos++;
+      state.inc();
       whitespace(state);
       const value = parseIdentifier(state);
       tags.push({ key, value });
@@ -126,13 +117,13 @@ const parseTag = (state: ParserState): Tag[] => {
   if (state.input[state.pos] !== "}") {
     throw new Error(`Expected , or }, got ${state.input[state.pos]}`);
   }
-  state.pos++;
+  state.inc();
   return tags;
 };
 
 const parseComma = (state: ParserState): boolean => {
   if (state.input[state.pos] === ",") {
-    state.pos++;
+    state.inc();
     return true;
   }
   return false;
@@ -157,22 +148,24 @@ export const parseSet = (state: ParserState): Set => {
     } else if (char === "{") {
       setSet("tags", parseTag(state));
     } else if (/^[0-9.-]$/.test(char)) {
-      const start = state.pos;
-      if (isNaN(parseNumber(state))) {
-        throw new Error(`Expected number, got ${state.input[state.pos]}`);
-      }
+      state.explore((rollback) => {
+        const start = state.pos;
+        if (isNaN(parseNumber(state))) {
+          throw new Error(`Expected number, got ${state.input[state.pos]}`);
+        }
 
-      whitespace(state);
-      if (state.input[state.pos] === ":") {
-        state.pos = start;
-        setSet("time", parseTime(state));
-      } else if ("mkf".includes(state.input[state.pos])) {
-        state.pos = start;
-        setSet("distance", parseDistance(state));
-      } else {
-        state.pos = start;
-        setSet("weight", parseWeight(state));
-      }
+        whitespace(state);
+        if (state.input[state.pos] === ":") {
+          rollback();
+          setSet("time", parseTime(state));
+        } else if ("mkf".includes(state.input[state.pos])) {
+          rollback();
+          setSet("distance", parseDistance(state));
+        } else {
+          rollback();
+          setSet("weight", parseWeight(state));
+        }
+      });
     } else {
       break;
     }

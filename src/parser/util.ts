@@ -7,8 +7,7 @@ export const takeWhile = (
   let result = "";
   while (state.pos < state.input.length && predicate(state.input[state.pos])) {
     result += state.input[state.pos];
-    state.pos++;
-    state.col++;
+    state.inc();
   }
   return result;
 };
@@ -20,8 +19,7 @@ export const takeUntil = (
   let result = "";
   while (state.pos < state.input.length && !predicate(state.input[state.pos])) {
     result += state.input[state.pos];
-    state.pos++;
-    state.col++;
+    state.inc();
   }
   return result;
 };
@@ -38,18 +36,31 @@ export const comment = (state: ParserState): string => {
 
 export const newLine = (state: ParserState): string => {
   const start = state.pos;
-  if (state.input[state.pos] !== "\n") {
-    throw new Error(`Expected newline, got ${state.input[state.pos]}`);
-  }
-  state.pos++;
-  state.line++;
-  state.col = 1;
+  expect(state, "\n");
+  state.incLine();
   return state.input.slice(start, state.pos);
 };
 
 export const parseIdentifier = (state: ParserState): string => {
-  const start = state.pos;
   const key = takeWhile(state, (char) => /[a-zA-Z0-9_-]/.test(char));
-  state.pos = start + key.length;
   return key;
+};
+
+export const expect = (state: ParserState, expected: string): void => {
+  const actual = state.input[state.pos];
+  if (actual !== expected) {
+    const ex = expected === "\n" ? "newline" : expected;
+    const act = actual === "\n" ? "newline" : actual;
+    throw new Error(`${state.line}:${state.col} Expected ${ex}, got ${act}`);
+  }
+  state.inc();
+};
+
+export const findNextLineStart = (state: ParserState): void => {
+  whitespace(state);
+  comment(state);
+  if (state.input[state.pos] === "\n") {
+    newLine(state);
+    findNextLineStart(state);
+  }
 };
