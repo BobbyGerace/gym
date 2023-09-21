@@ -73,14 +73,13 @@ export const parseExercise = (state: ParserState): Exercise => {
 
 const isNewExercise = (state: ParserState): boolean => {
   let isExercise = false;
-  state.explore((rollback) => {
-    whitespace(state);
-    parseSequence(state);
-    whitespace(state);
-    parseSubsequence(state);
-    whitespace(state);
-    isExercise = state.input[state.pos] === ")";
-    rollback();
-  });
+  const rollback = state.save();
+  whitespace(state);
+  parseSequence(state);
+  whitespace(state);
+  parseSubsequence(state);
+  whitespace(state);
+  isExercise = state.input[state.pos] === ")";
+  rollback();
   return isExercise;
 };

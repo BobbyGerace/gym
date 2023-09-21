@@ -46,12 +46,16 @@ export const parseIdentifier = (state: ParserState): string => {
   return key;
 };
 
+export const error = (state: ParserState, message: string): void => {
+  throw new Error(`${state.line}:${state.col} ${message}`);
+};
+
 export const expect = (state: ParserState, expected: string): void => {
   const actual = state.input[state.pos];
   if (actual !== expected) {
     const ex = expected === "\n" ? "newline" : expected;
     const act = actual === "\n" ? "newline" : actual;
-    throw new Error(`${state.line}:${state.col} Expected ${ex}, got ${act}`);
+    error(state, `Expected ${ex}, got ${act}`);
   }
   state.inc();
 };

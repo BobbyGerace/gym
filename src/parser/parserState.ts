@@ -35,11 +35,11 @@ export class ParserState {
     this._col = 1;
   }
 
-  explore(fn: (rollback: () => void) => void): void {
+  save(): () => void {
     const pos = this._pos;
-    fn(() => {
+    return () => {
       this._pos = pos;
-    });
+    };
   }
 
   isEOF(): boolean {

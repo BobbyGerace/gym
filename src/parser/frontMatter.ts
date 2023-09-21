@@ -6,6 +6,7 @@ import {
   newLine,
   parseIdentifier,
   expect,
+  error,
 } from "./util";
 
 export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
@@ -56,7 +57,7 @@ export const parseFrontMatter = (
     whitespace(state);
   }
   if (!parseFrontMatterDelimiter(state)) {
-    throw new Error("Expected front matter delimiter");
+    error(state, "Expected front matter delimiter");
   }
   return pairs;
 };

@@ -1,18 +1,29 @@
 import { ParserState } from "./parserState";
-import { takeWhile, whitespace, expect, parseIdentifier } from "./util";
+import { takeWhile, whitespace, expect, error, parseIdentifier } from "./util";
 
 export type Set = Partial<{
-  weight: number | "bw";
+  weight: number | "bw" | ValueWithUnit<typeof weightUnits[number]>;
   reps: number[];
   rpe: number;
-  distance: Distance;
+  distance: ValueWithUnit<typeof distanceUnits[number]>;
   time: Time;
   tags: Tag[];
 }>;
-const distanceUnits = ["m", "km", "mi", "ft"] as const;
+const distanceUnits = ["m", "km", "mi", "ft", "in", "cm"] as const;
+const weightUnits = ["lb", "kg"] as const;
+const allUnits = [...distanceUnits, ...weightUnits] as const;
+
+const isWeightValueWithUnit = (
+  value: ValueWithUnit<typeof allUnits[number]>
+): value is ValueWithUnit<typeof weightUnits[number]> =>
+  weightUnits.includes(value.unit as any);
+const isDistanceValueWithUnit = (
+  value: ValueWithUnit<typeof allUnits[number]>
+): value is ValueWithUnit<typeof distanceUnits[number]> =>
+  distanceUnits.includes(value.unit as any);
 
 type Time = { hours: number; minutes: number; seconds: number };
-type Distance = { value: number; unit: typeof distanceUnits[number] };
+type ValueWithUnit<U> = { value: number; unit: U };
 type Tag = { key: string; value?: string };
 
 const parseNumber = (state: ParserState): number => {
@@ -31,7 +42,7 @@ const parseNumber = (state: ParserState): number => {
   const result = parseFloat(num);
 
   if (isNaN(result)) {
-    throw new Error(`Expected number, got ${num}`);
+    error(state, `Expected number, got ${num}`);
   }
   return result;
 };
@@ -58,14 +69,16 @@ const parseReps = (state: ParserState): number[] => {
   return reps;
 };
 
-const parseDistance = (state: ParserState): Distance => {
+const parseWithUnit = (
+  state: ParserState
+): ValueWithUnit<typeof allUnits[number]> => {
   const value = parseNumber(state);
   whitespace(state);
-  const unit = takeWhile(state, (char) => /[a-z]/.test(char));
-  if (!distanceUnits.includes(unit as any)) {
-    throw new Error(`Expected unit, got ${unit}`);
+  const unit = takeWhile(state, (char) => /[a-zA-Z]/.test(char)).toLowerCase();
+  if (!allUnits.includes(unit as any)) {
+    error(state, `Expected unit, got ${unit}`);
   }
-  return { value, unit: unit as Distance["unit"] };
+  return { value, unit: unit as typeof allUnits[number] };
 };
 
 const parseTime = (state: ParserState): Time => {
@@ -85,8 +98,8 @@ const parseTime = (state: ParserState): Time => {
 };
 
 const parseBodyweight = (state: ParserState): "bw" => {
-  if (state.input.slice(state.pos, state.pos + 2) !== "bw") {
-    throw new Error(`Expected bw, got ${state.input[state.pos]}`);
+  if (state.input.slice(state.pos, state.pos + 2).toLowerCase() !== "bw") {
+    error(state, `Expected bw, got ${state.input[state.pos]}`);
   }
   state.inc(2);
   return "bw";
@@ -115,7 +128,7 @@ const parseTag = (state: ParserState): Tag[] => {
   } while (parseComma(state));
 
   if (state.input[state.pos] !== "}") {
-    throw new Error(`Expected , or }, got ${state.input[state.pos]}`);
+    error(state, `Expected , or }, got ${state.input[state.pos]}`);
   }
   state.inc();
   return tags;
@@ -133,7 +146,7 @@ export const parseSet = (state: ParserState): Set => {
   const set: Set = {};
   const setSet = <K extends keyof Set>(key: K, value: Set[K]) => {
     if (set[key] !== undefined) {
-      throw new Error(`Duplicate ${key}`);
+      error(state, `Duplicate ${key}`);
     }
     set[key] = value;
   };
@@ -148,24 +161,29 @@ export const parseSet = (state: ParserState): Set => {
     } else if (char === "{") {
       setSet("tags", parseTag(state));
     } else if (/^[0-9.-]$/.test(char)) {
-      state.explore((rollback) => {
-        const start = state.pos;
-        if (isNaN(parseNumber(state))) {
-          throw new Error(`Expected number, got ${state.input[state.pos]}`);
-        }
+      const rollback = state.save();
+      if (isNaN(parseNumber(state))) {
+        error(state, `Expected number, got ${state.input[state.pos]}`);
+      }
 
-        whitespace(state);
-        if (state.input[state.pos] === ":") {
-          rollback();
-          setSet("time", parseTime(state));
-        } else if ("mkf".includes(state.input[state.pos])) {
-          rollback();
-          setSet("distance", parseDistance(state));
+      whitespace(state);
+      if (state.input[state.pos] === ":") {
+        rollback();
+        setSet("time", parseTime(state));
+      } else if (/^[mfickl]$/i.test(state.input[state.pos])) {
+        rollback();
+        const value = parseWithUnit(state);
+        if (isWeightValueWithUnit(value)) {
+          setSet("weight", value);
+        } else if (isDistanceValueWithUnit(value)) {
+          setSet("distance", value);
         } else {
-          rollback();
-          setSet("weight", parseWeight(state));
+          error(state, `Expected weight or distance, got ${value.unit}`);
         }
-      });
+      } else {
+        rollback();
+        setSet("weight", parseWeight(state));
+      }
     } else {
       break;
     }

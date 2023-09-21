@@ -25,6 +25,43 @@ test("parseSet should parse bodyweight", () => {
   });
 });
 
+const setWithBodyweightCapital = newState(`BW x 5 @ 10`);
+test("parseSet should parse bodyweight", () => {
+  expect(parseSet(setWithBodyweightCapital)).toEqual({
+    weight: "bw",
+    reps: [5],
+    rpe: 10,
+  });
+});
+
+const weightUnits = ["lb", "kg"];
+test("parseSet should parse weight units", () => {
+  for (const unit of weightUnits.concat(
+    weightUnits.map((u) => u.toUpperCase())
+  )) {
+    const setWithWeightUnits = newState(`250${unit} x 5 @ 10`);
+    expect(parseSet(setWithWeightUnits)).toEqual({
+      weight: { value: 250, unit: unit.toLowerCase() },
+      reps: [5],
+      rpe: 10,
+    });
+  }
+});
+
+const distanceUnits = ["m", "km", "mi", "ft", "in", "cm"];
+test("parseSet should parse distance units", () => {
+  for (const unit of distanceUnits.concat(
+    distanceUnits.map((u) => u.toUpperCase())
+  )) {
+    const setWithDistanceUnits = newState(`250${unit} x 5 @ 10`);
+    expect(parseSet(setWithDistanceUnits)).toEqual({
+      reps: [5],
+      rpe: 10,
+      distance: { value: 250, unit: unit.toLowerCase() },
+    });
+  }
+});
+
 const setWithShortTime = newState(`1:30 @ 10`);
 test("parseSet should parse short time", () => {
   expect(parseSet(setWithShortTime)).toEqual({
