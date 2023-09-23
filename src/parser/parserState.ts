@@ -37,8 +37,12 @@ export class ParserState {
 
   save(): () => void {
     const pos = this._pos;
+    const line = this._line;
+    const col = this._col;
     return () => {
       this._pos = pos;
+      this._line = line;
+      this._col = col;
     };
   }
 

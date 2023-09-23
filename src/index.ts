@@ -1,44 +1,13 @@
 import { Command } from "commander";
-import { newState } from "./parser/parserState";
-import { parseDocument } from "./parser/document";
+import { initializeDatabase, healthCheckFatal, healthCheckPrompt } from "./db";
+import { saveWorkout } from "./workout";
+import fs from "fs";
+import { getConfig } from "./config";
 
 const program = new Command();
 
 // Define the version
 program.version("1.0.0");
-
-program
-  .command("test")
-  .description("ad hoc command for testing. Dont commit!")
-  .action(() => {
-    const file = newState(`
-      ---
-      title: Hello world
-      date: 2020-01-01
-      ---
-
-      1) Bench Press
-      # Felt good today
-      225x10@9
-      200x10,10,10
-
-      2a) Lat Pulldown
-      100x10,10,10
-
-      2b) Dumbbell Bench Press
-      50x10,10,10
-
-      3a) Barbell Curl
-      65x15,15,15 {myorep-match}
-
-      3b) Face Pull
-      40x15,15,12
-    `);
-    console.time("parse");
-    const parsed = parseDocument(file);
-    console.timeEnd("parse");
-    console.log(parsed);
-  });
 
 // Exercise-related commands
 const exercise = program.command("exercise");
@@ -67,30 +36,45 @@ exercise
     // Use options.number and options.print as needed
   });
 
-// Cache-related commands
-const cache = program.command("cache");
+// Database-related commands
+const db = program.command("db");
 
-cache
-  .command("rebuild")
-  .description("rebuild the cache")
+db.command("rebuild")
+  .description("rebuild the database")
   .action(() => {
-    console.log("Rebuilding cache...");
+    const filePath = getConfig().databaseFile;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    initializeDatabase(filePath);
+    console.log("Database successfully rebuilt.");
   });
 
-cache
-  .command("clear")
-  .description("clear the cache")
+db.command("init")
+  .description("clear the database")
   .action(() => {
-    console.log("Clearing cache...");
+    console.log("Initializing database...");
+    const filePath = getConfig().databaseFile;
+    if (fs.existsSync(filePath)) {
+      console.log(
+        "Database already exists. Use 'gym db rebuild' to delete and recreate."
+      );
+    } else {
+      initializeDatabase(filePath);
+    }
   });
 
 // Workout-related commands
 const workout = program.command("workout");
 workout
   .command("save <fileName>")
-  .description("parse the workout and save it to the cache")
-  .action((fileName) => {
-    console.log(`Saving workout from ${fileName} to cache...`);
+  .description("parse the workout and save it to the database")
+  .action(async (fileName) => {
+    await healthCheckFatal();
+
+    console.log(`Saving workout from ${fileName} to database...`);
+    const workout = fs.readFileSync(fileName, "utf-8");
+    console.log(await saveWorkout(fileName, workout));
   });
 
 workout
@@ -107,9 +91,9 @@ workout
 
 workout
   .command("rm <fileName>")
-  .description("deletes a workout file and clears the cache")
+  .description("deletes a workout file and clears the database")
   .action((fileName) => {
-    console.log(`Removing workout file ${fileName} and clearing cache...`);
+    console.log(`Removing workout file ${fileName} and clearing database...`);
   });
 
 workout

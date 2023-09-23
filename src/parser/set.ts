@@ -23,7 +23,7 @@ const isDistanceValueWithUnit = (
   distanceUnits.includes(value.unit as any);
 
 type Time = { hours: number; minutes: number; seconds: number };
-type ValueWithUnit<U> = { value: number; unit: U };
+type ValueWithUnit<U extends string> = { value: number; unit: U };
 type Tag = { key: string; value?: string };
 
 const parseNumber = (state: ParserState): number => {
