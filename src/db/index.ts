@@ -41,8 +41,8 @@ export const initializeDatabase = (filePath: string): void => {
           exercise_id INTEGER,
           sequence INTEGER NOT NULL,
           subsequence TEXT,
-          lineStart INTEGER NOT NULL,
-          lineEnd INTEGER NOT NULL,
+          line_start INTEGER NOT NULL,
+          line_end INTEGER NOT NULL,
           workout_id INTEGER,
           FOREIGN KEY(exercise_id) REFERENCES exercise(id),
           FOREIGN KEY(workout_id) REFERENCES workout(id)
@@ -53,15 +53,15 @@ export const initializeDatabase = (filePath: string): void => {
       db.run(`
         CREATE TABLE exercise_set (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          weightValue REAL,
-          weightUnit TEXT,
-          reps TEXT,
+          weight_value REAL,
+          weight_unit TEXT,
+          reps INTEGER,
           rpe REAL,
-          distanceValue REAL,
-          distanceUnit TEXT,
-          hours INTEGER DEFAULT 0,
-          minutes INTEGER DEFAULT 0,
-          seconds INTEGER DEFAULT 0,
+          distance_value REAL,
+          distance_unit TEXT,
+          hours INTEGER,
+          minutes INTEGER,
+          seconds INTEGER,
           tags JSON,
           exercise_instance_id INTEGER,
           FOREIGN KEY(exercise_instance_id) REFERENCES exercise_instance(id)
@@ -134,7 +134,7 @@ const dbIsCurrentVersion = async (): Promise<boolean> => {
   return dbVersion === DB_VERSION;
 };
 
-export const healthCheckFatal = async (): void => {
+export const healthCheckFatal = async (): Promise<void> => {
   if (!dbFileExists()) {
     console.error("Database file does not exist. Run `gym db init` to setup");
     process.exit(1);

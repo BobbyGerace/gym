@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { initializeDatabase, healthCheckFatal, healthCheckPrompt } from "./db";
-import { saveWorkout } from "./workout";
+import { saveWorkout } from "./workout/save";
 import fs from "fs";
 import { getConfig } from "./config";
 
