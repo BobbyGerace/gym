@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-type Config = {
+export type Config = {
   databaseFile: string;
   editor: string;
   editorArgs: string[];

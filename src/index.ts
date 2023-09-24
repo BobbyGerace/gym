@@ -1,9 +1,11 @@
 import { Command } from "commander";
-import { initializeDatabase, healthCheckFatal, healthCheckPrompt } from "./db";
-import { saveWorkout } from "./workout/save";
-import fs from "fs";
 import { getConfig } from "./config";
+import { Database } from "./database";
+import { DbController } from "./controllers/db";
+import { WorkoutController } from "./controllers/workout";
 
+const config = getConfig();
+const database = new Database(config.databaseFile);
 const program = new Command();
 
 // Define the version
@@ -39,62 +41,33 @@ exercise
 // Database-related commands
 const db = program.command("db");
 
+const dbController = new DbController(config, database);
 db.command("rebuild")
   .description("rebuild the database")
-  .action(() => {
-    const filePath = getConfig().databaseFile;
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    initializeDatabase(filePath);
-    console.log("Database successfully rebuilt.");
-  });
+  .action(dbController.rebuild.bind(dbController));
 
 db.command("init")
-  .description("clear the database")
-  .action(() => {
-    console.log("Initializing database...");
-    const filePath = getConfig().databaseFile;
-    if (fs.existsSync(filePath)) {
-      console.log(
-        "Database already exists. Use 'gym db rebuild' to delete and recreate."
-      );
-    } else {
-      initializeDatabase(filePath);
-    }
-  });
+  .description("Initialize the database")
+  .action(dbController.init.bind(dbController));
 
 // Workout-related commands
 const workout = program.command("workout");
+const workoutController = new WorkoutController(config, database);
 workout
   .command("save <fileName>")
   .description("parse the workout and save it to the database")
-  .action(async (fileName) => {
-    await healthCheckFatal();
-
-    console.log(`Saving workout from ${fileName} to database...`);
-    const workout = fs.readFileSync(fileName, "utf-8");
-    console.log(await saveWorkout(fileName, workout));
-  });
+  .action(workoutController.save.bind(workoutController));
 
 workout
   .command("new")
   .option("-t, --template <templateFile>", "create from a template")
   .description("create a new file and open it in an editor")
-  .action((options) => {
-    if (options.template) {
-      console.log(`Creating new workout from template ${options.template}...`);
-    } else {
-      console.log("Creating new workout...");
-    }
-  });
+  .action(workoutController.new.bind(workoutController));
 
 workout
   .command("rm <fileName>")
   .description("deletes a workout file and clears the database")
-  .action((fileName) => {
-    console.log(`Removing workout file ${fileName} and clearing database...`);
-  });
+  .action(workoutController.rm.bind(workoutController));
 
 workout
   .command("parse <fileName>")
