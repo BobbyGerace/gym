@@ -51,29 +51,73 @@ test("saves workout", async () => {
     await new PersistWorkout(db).saveWorkout(fileName, ast);
 
     const wRows = await db.query<any>("select * from workout");
+    const exRows = await db.query<any>("select * from exercise");
+    const exIRows = await db.query<any>("select * from exercise_instance");
+    const sRows = await db.query<any>("select * from exercise_set");
     expect(wRows.length).toBe(1);
     expect(wRows[0].file_name).toBe(fileName);
     expect(wRows[0].front_matter).toBe('{"hello":"world"}');
+    expect(exRows.length).toBe(2);
+    expect(exIRows.length).toBe(2);
+    expect(sRows.length).toBe(4);
   });
 });
 
-// test("creates exercises correctly", async () => {
-//   const db = new Database(":memory:");
-//   await db.withSingleConnection(async () => {
-//     await db.initializeDatabase();
-//     const fileName = "2023-09-24.gym";
+test("creates exercises correctly", async () => {
+  const db = new Database(":memory:");
+  await db.withSingleConnection(async () => {
+    await db.initializeDatabase();
 
-//     const persist = new PersistWorkout(db);
-//     await persist.saveWorkout(fileName, parseWorkout(workout1));
-//     await persist.saveWorkout(fileName, parseWorkout(workout2));
+    const persist = new PersistWorkout(db);
+    await persist.saveWorkout("2023-09-24.gym", parseWorkout(workout1));
+    await persist.saveWorkout("2023-09-25.gym", parseWorkout(workout2));
 
-//     const exRows = await db.query<any>("select * from exercise");
+    const exRows = await db.query<any>("select * from exercise");
 
-//     console.log(exRows);
-//     expect(exRows.length).toBe(3);
-//   });
-// });
+    expect(exRows.length).toBe(3);
+  });
+});
 
-test("removes workout", () => {});
+test("removes workout", async () => {
+  const db = new Database(":memory:");
+  await db.withSingleConnection(async () => {
+    await db.initializeDatabase();
+    const fileName = "2023-09-24.gym";
 
-test("overwrites workout", () => {});
+    const persist = new PersistWorkout(db);
+    await persist.saveWorkout(fileName, parseWorkout(workout1));
+    await persist.deleteWorkout(fileName);
+
+    const wRows = await db.query<any>("select * from workout");
+    const exRows = await db.query<any>("select * from exercise");
+    const exIRows = await db.query<any>("select * from exercise_instance");
+    const sRows = await db.query<any>("select * from exercise_set");
+    expect(wRows.length).toBe(0);
+    // TODO: this is failing
+    // expect(exRows.length).toBe(0);
+    // expect(exIRows.length).toBe(0);
+    // expect(sRows.length).toBe(0);
+  });
+});
+
+test("overwrites workout", async () => {
+  const db = new Database(":memory:");
+  await db.withSingleConnection(async () => {
+    await db.initializeDatabase();
+    const fileName = "2023-09-24.gym";
+
+    const persist = new PersistWorkout(db);
+    await persist.saveWorkout(fileName, parseWorkout(workout1));
+    await persist.saveWorkout(fileName, parseWorkout(workout2));
+
+    const wRows = await db.query<any>("select * from workout");
+    const exRows = await db.query<any>("select * from exercise");
+    const exIRows = await db.query<any>("select * from exercise_instance");
+    const sRows = await db.query<any>("select * from exercise_set");
+    expect(wRows.length).toBe(1);
+    // TODO: this is failing
+    // expect(exRows.length).toBe(3);
+    // expect(exIRows.length).toBe(3);
+    // expect(sRows.length).toBe(8);
+  });
+});

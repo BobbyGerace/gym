@@ -9,7 +9,6 @@ export class Database {
   private databaseFile: string;
 
   constructor(databaseFile: string) {
-    console.log(databaseFile);
     this.databaseFile = databaseFile;
     this._db = null;
   }
@@ -37,19 +36,16 @@ export class Database {
 
   async connect<T>(fn: (db: sqlite3.Database) => Promise<T>): Promise<T> {
     if (this._db) {
-      console.log("here");
       return fn(this._db);
     } else {
       const db = await this.openDatabase();
 
       try {
         const result = await fn(db);
-        console.log("ayy");
         await this.closeDatabase(db);
         return result;
       } catch (e) {
         await this.closeDatabase(db);
-        console.log("lmao");
         throw e;
       }
     }

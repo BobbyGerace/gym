@@ -72,9 +72,7 @@ workout
 workout
   .command("parse <fileName>")
   .description("tries to parse a file and outputs JSON")
-  .action((fileName) => {
-    console.log(`Parsing workout file ${fileName}...`);
-  });
+  .action(workoutController.parse.bind(workoutController));
 
 program.parse(process.argv);
 

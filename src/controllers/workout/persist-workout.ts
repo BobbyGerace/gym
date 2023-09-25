@@ -47,16 +47,16 @@ export class PersistWorkout {
       id: number;
       name: string;
     }>(
-      `SELECT id, name FROM exercise WHERE name IN (${exerciseNames
+      `SELECT id, name FROM exercise WHERE name COLLATE NOCASE IN (${exerciseNames
         .map(() => "?")
-        .join(", ")}) COLLATE NOCASE;`,
+        .join(", ")});`,
       exerciseNames
     );
 
-    console.log(existingExerciseRows);
-
     const newExerciseNames = exerciseNames.filter((exerciseName) => {
-      return !existingExerciseRows.some((row) => row.name === exerciseName);
+      return !existingExerciseRows.some(
+        (row) => row.name.toLowerCase() === exerciseName.toLowerCase()
+      );
     });
     const newExerciseRows = await this.db.query<{ id: number; name: string }>(
       `INSERT INTO exercise (name) VALUES ${newExerciseNames
@@ -162,7 +162,7 @@ export class PersistWorkout {
   }
 
   async cleanUpExercises(): Promise<void> {
-    this.db.query(`DELETE FROM exercise WHERE id NOT IN (
+    await this.db.query(`DELETE FROM exercise WHERE id NOT IN (
       SELECT DISTINCT exercise_id FROM exercise_instance
     );`);
   }
