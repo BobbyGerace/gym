@@ -1,5 +1,5 @@
-import { Database } from "../database";
-import { Config } from "../config";
+import { Database } from "../lib/database";
+import { Config } from "../lib/config";
 
 import fs from "fs";
 

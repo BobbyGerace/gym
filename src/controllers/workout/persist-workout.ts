@@ -1,8 +1,6 @@
-import { Database } from "../../database";
-import { parseWorkout } from "../../parser";
-import { Document } from "../../parser/document";
-import { Exercise } from "../../parser/exercise";
-import { Set } from "../../parser/set";
+import { Database } from "../../lib/database";
+import { parseWorkout } from "../../lib/parser";
+import { Workout, Exercise, Set } from "../../lib/parser/ast";
 import fs from "fs";
 
 type ExerciseWithId = Exercise & { id: number };
@@ -14,17 +12,15 @@ export class PersistWorkout {
     this.db = db;
   }
 
-  async saveWorkout(fileName: string, ast: Document): Promise<number> {
+  async saveWorkout(fileName: string, ast: Workout): Promise<number> {
+    await this.deleteWorkout(fileName);
+
     const args = [
       fileName,
       JSON.stringify(ast.frontMatter), // frontMatter
       new Date().toISOString(), // createdAt
       new Date().toISOString(), // updatedAt
     ];
-
-    if (this.fileExists(fileName)) {
-      await this.deleteWorkout(fileName);
-    }
 
     // saves the workout to the database, returning the id
     // of the workout
@@ -56,6 +52,8 @@ export class PersistWorkout {
         .join(", ")}) COLLATE NOCASE;`,
       exerciseNames
     );
+
+    console.log(existingExerciseRows);
 
     const newExerciseNames = exerciseNames.filter((exerciseName) => {
       return !existingExerciseRows.some((row) => row.name === exerciseName);

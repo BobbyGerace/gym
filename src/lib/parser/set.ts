@@ -1,30 +1,14 @@
 import { ParserState } from "./parserState";
 import { takeWhile, whitespace, expect, error, parseIdentifier } from "./util";
-
-export type Set = Partial<{
-  weight: number | "bw" | ValueWithUnit<typeof weightUnits[number]>;
-  reps: number[];
-  rpe: number;
-  distance: ValueWithUnit<typeof distanceUnits[number]>;
-  time: Time;
-  tags: Tag[];
-}>;
-const distanceUnits = ["m", "km", "mi", "ft", "in", "cm"] as const;
-const weightUnits = ["lb", "kg"] as const;
-const allUnits = [...distanceUnits, ...weightUnits] as const;
-
-const isWeightValueWithUnit = (
-  value: ValueWithUnit<typeof allUnits[number]>
-): value is ValueWithUnit<typeof weightUnits[number]> =>
-  weightUnits.includes(value.unit as any);
-const isDistanceValueWithUnit = (
-  value: ValueWithUnit<typeof allUnits[number]>
-): value is ValueWithUnit<typeof distanceUnits[number]> =>
-  distanceUnits.includes(value.unit as any);
-
-type Time = { hours: number; minutes: number; seconds: number };
-type ValueWithUnit<U extends string> = { value: number; unit: U };
-type Tag = { key: string; value?: string };
+import {
+  Set,
+  Tag,
+  Time,
+  ValueWithUnit,
+  allUnits,
+  isDistanceValueWithUnit,
+  isWeightValueWithUnit,
+} from "./ast";
 
 const parseNumber = (state: ParserState): number => {
   let num = "";

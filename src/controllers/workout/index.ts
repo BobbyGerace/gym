@@ -1,8 +1,8 @@
-import { Config } from "../../config";
-import { Database } from "../../database";
-import { parseWorkout } from "../../parser";
+import { Config } from "../../lib/config";
+import { Database } from "../../lib/database";
+import { parseWorkout } from "../../lib/parser";
 import { PersistWorkout } from "./persist-workout";
-import { yNPrompt } from "../../prompt";
+import { yNPrompt } from "../../lib/prompt";
 import { spawn } from "child_process";
 
 import fs from "fs";

@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { getConfig } from "./config";
-import { Database } from "./database";
+import { getConfig } from "./lib/config";
+import { Database } from "./lib/database";
 import { DbController } from "./controllers/db";
 import { WorkoutController } from "./controllers/workout";
 

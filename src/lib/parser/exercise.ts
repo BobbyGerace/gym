@@ -6,16 +6,8 @@ import {
   whitespace,
   expect,
 } from "./util";
-import { Set, parseSet } from "./set";
-
-export type Exercise = {
-  name: string;
-  sequence: number;
-  subsequence: string | null;
-  sets: Set[];
-  lineStart: number;
-  lineEnd: number;
-};
+import { parseSet } from "./set";
+import { Exercise, Set } from "./ast";
 
 const parseSequence = (state: ParserState): number => {
   const sequence = takeWhile(state, (char) => /[0-9]/.test(char));
