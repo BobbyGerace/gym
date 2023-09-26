@@ -157,6 +157,7 @@ export class PersistWorkout {
   }
 
   async deleteWorkout(fileName: string): Promise<void> {
+    await this.db.query(`PRAGMA foreign_keys = ON;`);
     await this.db.query(`DELETE FROM workout WHERE file_name = ?;`, [fileName]);
     await this.cleanUpExercises();
   }

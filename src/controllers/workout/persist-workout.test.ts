@@ -31,8 +31,7 @@ const workout2 = `
 
 // TODO: move this to a database-specific test file
 test("database works", async () => {
-  const db = new Database(":memory:");
-  await db.withSingleConnection(async () => {
+  await Database.open(":memory:", async (db) => {
     await db.initializeDatabase();
     const rows = await db.query("select * from key_value");
 
@@ -41,8 +40,7 @@ test("database works", async () => {
 });
 
 test("saves workout", async () => {
-  const db = new Database(":memory:");
-  await db.withSingleConnection(async () => {
+  await Database.open(":memory:", async (db) => {
     await db.initializeDatabase();
 
     const fileName = "2023-09-24.gym";
@@ -64,8 +62,7 @@ test("saves workout", async () => {
 });
 
 test("creates exercises correctly", async () => {
-  const db = new Database(":memory:");
-  await db.withSingleConnection(async () => {
+  await Database.open(":memory:", async (db) => {
     await db.initializeDatabase();
 
     const persist = new PersistWorkout(db);
@@ -79,8 +76,7 @@ test("creates exercises correctly", async () => {
 });
 
 test("removes workout", async () => {
-  const db = new Database(":memory:");
-  await db.withSingleConnection(async () => {
+  await Database.open(":memory:", async (db) => {
     await db.initializeDatabase();
     const fileName = "2023-09-24.gym";
 
@@ -93,16 +89,14 @@ test("removes workout", async () => {
     const exIRows = await db.query<any>("select * from exercise_instance");
     const sRows = await db.query<any>("select * from exercise_set");
     expect(wRows.length).toBe(0);
-    // TODO: this is failing
-    // expect(exRows.length).toBe(0);
-    // expect(exIRows.length).toBe(0);
-    // expect(sRows.length).toBe(0);
+    expect(exRows.length).toBe(0);
+    expect(exIRows.length).toBe(0);
+    expect(sRows.length).toBe(0);
   });
 });
 
 test("overwrites workout", async () => {
-  const db = new Database(":memory:");
-  await db.withSingleConnection(async () => {
+  await Database.open(":memory:", async (db) => {
     await db.initializeDatabase();
     const fileName = "2023-09-24.gym";
 
@@ -115,9 +109,8 @@ test("overwrites workout", async () => {
     const exIRows = await db.query<any>("select * from exercise_instance");
     const sRows = await db.query<any>("select * from exercise_set");
     expect(wRows.length).toBe(1);
-    // TODO: this is failing
-    // expect(exRows.length).toBe(3);
-    // expect(exIRows.length).toBe(3);
-    // expect(sRows.length).toBe(8);
+    expect(exRows.length).toBe(3);
+    expect(exIRows.length).toBe(3);
+    expect(sRows.length).toBe(8);
   });
 });

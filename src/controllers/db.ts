@@ -4,10 +4,8 @@ import { Config } from "../lib/config";
 import fs from "fs";
 
 export class DbController {
-  db: Database;
   config: Config;
-  constructor(config: Config, db: Database) {
-    this.db = db;
+  constructor(config: Config) {
     this.config = config;
   }
 
@@ -17,7 +15,8 @@ export class DbController {
       fs.unlinkSync(filePath);
     }
 
-    this.db.initializeDatabase();
+    Database.open(this.config.databaseFile, (db) => db.initializeDatabase());
+
     console.log("Database successfully rebuilt.");
   }
 

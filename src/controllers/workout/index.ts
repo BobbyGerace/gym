@@ -1,5 +1,9 @@
 import { Config } from "../../lib/config";
-import { Database } from "../../lib/database";
+import {
+  Database,
+  healthCheckFatal,
+  healthCheckPrompt,
+} from "../../lib/database";
 import { parseWorkout } from "../../lib/parser";
 import { PersistWorkout } from "./persist-workout";
 import { yNPrompt } from "../../lib/prompt";
@@ -9,20 +13,18 @@ import fs from "fs";
 
 export class WorkoutController {
   private config: Config;
-  private db: Database;
-  private persistWorkout: PersistWorkout;
-  constructor(config: Config, db: Database) {
+  constructor(config: Config) {
     this.config = config;
-    this.db = db;
-    this.persistWorkout = new PersistWorkout(db);
   }
 
   async save(fileName: string) {
-    await this.db.healthCheckFatal();
+    await healthCheckFatal(this.config.databaseFile);
 
     console.log(`Saving workout from ${fileName} to database...`);
-    const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
-    await this.persistWorkout.saveWorkout(fileName, ast);
+    Database.open(this.config.databaseFile, async (db) => {
+      const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
+      await new PersistWorkout(db).saveWorkout(fileName, ast);
+    });
   }
 
   async new(options: { template: string }) {
@@ -34,14 +36,16 @@ export class WorkoutController {
   }
 
   async rm(fileName: string) {
-    await this.db.healthCheckFatal();
+    await healthCheckFatal(this.config.databaseFile);
 
     console.log(`Deleting workout ${fileName}...`);
-    await this.persistWorkout.deleteWorkout(fileName);
+    Database.open(this.config.databaseFile, async (db) => {
+      await new PersistWorkout(db).deleteWorkout(fileName);
+    });
   }
 
   async edit(fileName: string) {
-    await this.db.healthCheckPrompt();
+    await healthCheckPrompt(this.config.databaseFile);
 
     this.openInEditor(fileName);
   }

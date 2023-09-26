@@ -5,7 +5,6 @@ import { DbController } from "./controllers/db";
 import { WorkoutController } from "./controllers/workout";
 
 const config = getConfig();
-const database = new Database(config.databaseFile);
 const program = new Command();
 
 // Define the version
@@ -41,7 +40,7 @@ exercise
 // Database-related commands
 const db = program.command("db");
 
-const dbController = new DbController(config, database);
+const dbController = new DbController(config);
 db.command("rebuild")
   .description("rebuild the database")
   .action(dbController.rebuild.bind(dbController));
@@ -52,7 +51,7 @@ db.command("init")
 
 // Workout-related commands
 const workout = program.command("workout");
-const workoutController = new WorkoutController(config, database);
+const workoutController = new WorkoutController(config);
 workout
   .command("save <fileName>")
   .description("parse the workout and save it to the database")

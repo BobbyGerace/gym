@@ -5,70 +5,40 @@ import fs from "fs";
 const DB_VERSION = 1;
 
 export class Database {
-  private _db: null | sqlite3.Database;
-  private databaseFile: string;
+  private db: sqlite3.Database;
 
-  constructor(databaseFile: string) {
-    this.databaseFile = databaseFile;
-    this._db = null;
+  private constructor(db: sqlite3.Database) {
+    this.db = db;
   }
 
-  openDatabase(): Promise<sqlite3.Database> {
-    return new Promise((resolve, reject) => {
-      const db = new sqlite3.Database(this.databaseFile, (err) => {
-        if (err) return reject(`Error opening database: ${err.message}`);
-        resolve(db);
-      });
-    });
-  }
+  private static connections: Record<string, sqlite3.Database> = {};
 
-  closeDatabase(db: sqlite3.Database): Promise<void> {
-    return new Promise((resolve, reject) => {
-      db.close((err) => {
-        if (err) {
-          reject(new Error(`Error closing database: ${err.message}`));
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
+  static async open<T>(
+    databaseFile: string,
+    fn: (db: Database) => Promise<T>
+  ): Promise<T> {
+    if (Database.connections[databaseFile]) {
+      return fn(new Database(Database.connections[databaseFile]));
+    }
 
-  async connect<T>(fn: (db: sqlite3.Database) => Promise<T>): Promise<T> {
-    if (this._db) {
-      return fn(this._db);
-    } else {
-      const db = await this.openDatabase();
-
-      try {
-        const result = await fn(db);
-        await this.closeDatabase(db);
-        return result;
-      } catch (e) {
-        await this.closeDatabase(db);
-        throw e;
-      }
+    const sqliteDb = await openDatabase(databaseFile);
+    const instance = new Database(sqliteDb);
+    try {
+      Database.connections[databaseFile] = sqliteDb;
+      return await fn(instance);
+    } finally {
+      await closeDatabase(sqliteDb);
+      delete Database.connections[databaseFile];
     }
   }
 
-  async withSingleConnection(fn: () => Promise<void>) {
-    await this.connect(async (db) => {
-      try {
-        this._db = db;
-        await fn();
-      } finally {
-        this._db = null;
-      }
-    });
-  }
-
   initializeDatabase(): Promise<void> {
-    return this.connect<void>((db) => {
-      return new Promise((resolve) => {
-        // Create tables
-        db.serialize(() => {
-          // workout table - id autoincrements
-          db.run(`
+    return new Promise((resolve) => {
+      const db = this.db;
+      // Create tables
+      db.serialize(() => {
+        // workout table - id autoincrements
+        db.run(`
             CREATE TABLE workout (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               file_name TEXT,
@@ -79,16 +49,16 @@ export class Database {
             );
           `);
 
-          // exercise table
-          db.run(`
+        // exercise table
+        db.run(`
             CREATE TABLE exercise (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               name TEXT UNIQUE NOT NULL
             );
           `);
 
-          // exercise_instance table
-          db.run(`
+        // exercise_instance table
+        db.run(`
             CREATE TABLE exercise_instance (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               exercise_id INTEGER,
@@ -102,8 +72,8 @@ export class Database {
             );
           `);
 
-          // set table
-          db.run(`
+        // set table
+        db.run(`
             CREATE TABLE exercise_set (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               weight_value REAL,
@@ -121,81 +91,105 @@ export class Database {
             );
           `);
 
-          db.run(`
+        db.run(`
             CREATE TABLE key_value (
               key TEXT PRIMARY KEY,
               value JSON
             );
           `);
 
-          // Careful: The last one should always contain the resolve
-          db.run(
-            `
+        // Careful: The last one should always contain the resolve
+        db.run(
+          `
             INSERT INTO key_value (key, value)
             VALUES ('db_version', ${DB_VERSION});
           `,
-            () => {
-              resolve();
-            }
-          );
-        });
+          () => {
+            resolve();
+          }
+        );
       });
     });
-  }
-
-  dbFileExists(): boolean {
-    return fs.existsSync(this.databaseFile);
   }
 
   query<T>(sql: string, args?: any[]): Promise<T[]> {
-    return this.connect((db) => {
-      return new Promise((resolve, reject) => {
-        db.all(sql, args, (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(rows as T[]);
-          }
-        });
+    return new Promise((resolve, reject) => {
+      this.db.all(sql, args, (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as T[]);
+        }
       });
     });
   }
-  async dbIsCurrentVersion(): Promise<boolean> {
-    const rows = await this.query<{ value: string }>(
-      "SELECT value FROM key_value WHERE key = 'db_version'"
-    );
-    if (rows.length === 0) {
-      return false;
-    }
-    const dbVersion = parseInt(rows[0].value, 10);
-    return dbVersion === DB_VERSION;
+
+  static singleQuery<T>(file: string, sql: string, args?: any[]): Promise<T[]> {
+    return Database.open(file, (db) => db.query(sql, args));
   }
+}
 
-  async healthCheckFatal(): Promise<void> {
-    if (!this.dbFileExists()) {
-      console.error("Database file does not exist. Run `gym db init` to setup");
-      process.exit(1);
-    }
-    if (!(await this.dbIsCurrentVersion())) {
-      console.error("Database schema has changed. Run `gym db rebuild` to fix");
-      process.exit(1);
-    }
+function openDatabase(databaseFile: string): Promise<sqlite3.Database> {
+  return new Promise((resolve, reject) => {
+    const db = new sqlite3.Database(databaseFile, (err) => {
+      if (err) return reject(`Error opening database: ${err.message}`);
+      resolve(db);
+    });
+  });
+}
+
+function closeDatabase(db: sqlite3.Database): Promise<void> {
+  return new Promise((resolve, reject) => {
+    db.close((err) => {
+      if (err) {
+        reject(new Error(`Error closing database: ${err.message}`));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+function dbFileExists(databaseFile: string): boolean {
+  return fs.existsSync(databaseFile);
+}
+
+export async function healthCheckFatal(databaseFile: string): Promise<void> {
+  if (!dbFileExists(databaseFile)) {
+    console.error("Database file does not exist. Run `gym db init` to setup");
+    process.exit(1);
   }
-
-  async healthCheckPrompt(): Promise<void> {
-    if (!this.dbFileExists()) {
-      const question =
-        "Database file does not exist. Run `gym db init` to setup?";
-
-      if (await yNPrompt(question)) console.log("TODO");
-      else process.exit(1);
-    }
-    if (!(await this.dbIsCurrentVersion())) {
-      const question =
-        "Database schema has changed. Run `gym db rebuild` to fix?";
-
-      if (await yNPrompt(question)) console.log("TODO");
-      else process.exit(1);
-    }
+  if (!(await dbIsCurrentVersion(databaseFile))) {
+    console.error("Database schema has changed. Run `gym db rebuild` to fix");
+    process.exit(1);
   }
+}
+
+export async function healthCheckPrompt(databaseFile: string): Promise<void> {
+  if (!dbFileExists(databaseFile)) {
+    const question =
+      "Database file does not exist. Run `gym db init` to setup?";
+
+    if (await yNPrompt(question)) console.log("TODO");
+    else process.exit(1);
+  }
+  if (!(await dbIsCurrentVersion(databaseFile))) {
+    const question =
+      "Database schema has changed. Run `gym db rebuild` to fix?";
+
+    if (await yNPrompt(question)) console.log("TODO");
+    else process.exit(1);
+  }
+}
+
+async function dbIsCurrentVersion(file: string): Promise<boolean> {
+  const rows = await Database.singleQuery<{ value: string }>(
+    file,
+    "SELECT value FROM key_value WHERE key = 'db_version'"
+  );
+  if (rows.length === 0) {
+    return false;
+  }
+  const dbVersion = parseInt(rows[0].value, 10);
+  return dbVersion === DB_VERSION;
 }
