@@ -15,14 +15,25 @@ export class Database {
 
   static async open<T>(
     databaseFile: string,
-    fn: (db: Database) => Promise<T>
+    fn: (db: Database) => Promise<T>,
+    onNotExists: (file: string) => Promise<void> = dbNotExistsError,
+    onWrongVersion: () => Promise<void> = wrongVersionError
   ): Promise<T> {
     if (Database.connections[databaseFile]) {
       return fn(new Database(Database.connections[databaseFile]));
     }
 
+    if (databaseFile !== ":memory:" && !fileExists(databaseFile)) {
+      await onNotExists(databaseFile);
+    }
+
     const sqliteDb = await openDatabase(databaseFile);
     const instance = new Database(sqliteDb);
+
+    if (!(await instance.dbIsCurrentVersion())) {
+      await onWrongVersion();
+    }
+
     try {
       Database.connections[databaseFile] = sqliteDb;
       return await fn(instance);
@@ -127,6 +138,17 @@ export class Database {
   static singleQuery<T>(file: string, sql: string, args?: any[]): Promise<T[]> {
     return Database.open(file, (db) => db.query(sql, args));
   }
+
+  async dbIsCurrentVersion(): Promise<boolean> {
+    const rows = await this.query<{ value: string }>(
+      "SELECT value FROM key_value WHERE key = 'db_version'"
+    );
+    if (rows.length === 0) {
+      return false;
+    }
+    const dbVersion = parseInt(rows[0].value, 10);
+    return dbVersion === DB_VERSION;
+  }
 }
 
 function openDatabase(databaseFile: string): Promise<sqlite3.Database> {
@@ -150,46 +172,18 @@ function closeDatabase(db: sqlite3.Database): Promise<void> {
   });
 }
 
-function dbFileExists(databaseFile: string): boolean {
-  return fs.existsSync(databaseFile);
+function fileExists(file: string): boolean {
+  return fs.existsSync(file);
 }
 
-export async function healthCheckFatal(databaseFile: string): Promise<void> {
-  if (!dbFileExists(databaseFile)) {
-    console.error("Database file does not exist. Run `gym db init` to setup");
-    process.exit(1);
-  }
-  if (!(await dbIsCurrentVersion(databaseFile))) {
-    console.error("Database schema has changed. Run `gym db rebuild` to fix");
-    process.exit(1);
-  }
-}
-
-export async function healthCheckPrompt(databaseFile: string): Promise<void> {
-  if (!dbFileExists(databaseFile)) {
-    const question =
-      "Database file does not exist. Run `gym db init` to setup?";
-
-    if (await yNPrompt(question)) console.log("TODO");
-    else process.exit(1);
-  }
-  if (!(await dbIsCurrentVersion(databaseFile))) {
-    const question =
-      "Database schema has changed. Run `gym db rebuild` to fix?";
-
-    if (await yNPrompt(question)) console.log("TODO");
-    else process.exit(1);
-  }
-}
-
-async function dbIsCurrentVersion(file: string): Promise<boolean> {
-  const rows = await Database.singleQuery<{ value: string }>(
-    file,
-    "SELECT value FROM key_value WHERE key = 'db_version'"
+const wrongVersionError = () => {
+  throw new Error(
+    `Database schema has changed. Run \`gym db rebuild\` to rebuild it`
   );
-  if (rows.length === 0) {
-    return false;
-  }
-  const dbVersion = parseInt(rows[0].value, 10);
-  return dbVersion === DB_VERSION;
-}
+};
+
+const dbNotExistsError = (file: string) => {
+  throw new Error(
+    `Database file ${file} does not exist. Run \`gym db init\` to create it`
+  );
+};

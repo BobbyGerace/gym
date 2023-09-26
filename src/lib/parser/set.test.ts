@@ -12,7 +12,7 @@ test("parseSet should parse set", () => {
     rpe: 10,
     time: { hours: 1, minutes: 30, seconds: 0 },
     distance: { value: 100, unit: "m" },
-    tags: [{ key: "chains", value: "123" }, { key: "another" }],
+    tags: [{ key: "chains", value: 123 }, { key: "another" }],
   });
 });
 
@@ -81,11 +81,11 @@ test("parseSet should parse set with whitespace", () => {
     rpe: 10,
     time: { hours: 1, minutes: 30, seconds: 0 },
     distance: { value: 100, unit: "m" },
-    tags: [{ key: "chains", value: "123" }, { key: "another" }],
+    tags: [{ key: "chains", value: 123 }, { key: "another" }],
   });
 });
 
-const lotsOfTags = newState(`100x2 {one: a, two_, with-dash: 42}`);
+const lotsOfTags = newState(`100x2 {one: a, two_, with-dash: -42.24}`);
 test("parseSet should parse lots of tags", () => {
   expect(parseSet(lotsOfTags)).toEqual({
     weight: 100,
@@ -93,7 +93,7 @@ test("parseSet should parse lots of tags", () => {
     tags: [
       { key: "one", value: "a" },
       { key: "two_" },
-      { key: "with-dash", value: "42" },
+      { key: "with-dash", value: -42.24 },
     ],
   });
 });
@@ -125,7 +125,7 @@ test("parseSet should parse all permutations", () => {
       rpe: 10,
       time: { hours: 1, minutes: 30, seconds: 0 },
       distance: { value: 100, unit: "m" },
-      tags: [{ key: "chains", value: "123" }, { key: "another" }],
+      tags: [{ key: "chains", value: 123 }, { key: "another" }],
     });
   }
 });
