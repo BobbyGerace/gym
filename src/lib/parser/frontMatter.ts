@@ -1,4 +1,5 @@
 import { ParserState } from "./parserState";
+import { FrontMatter } from "./ast";
 import {
   takeWhile,
   whitespace,
@@ -7,6 +8,8 @@ import {
   parseIdentifier,
   expect,
   error,
+  parseString,
+  isValidNumber,
 } from "./util";
 
 export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
@@ -19,30 +22,33 @@ export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
   return true;
 };
 
-export const parseFrontMatterKey = parseIdentifier;
+export const parseFrontMatterKey = (state: ParserState) => {
+  return state.char() === '"' ? parseString(state) : parseIdentifier(state);
+};
 
-export const parseFrontMatterValue = (state: ParserState): string =>
-  takeWhile(state, (char) => !"\n#".includes(char));
+export const parseFrontMatterValue = (state: ParserState): string => {
+  if (state.char() === '"') return parseString(state);
+  return takeWhile(state, (char) => !"\n#".includes(char));
+};
 
 export const parseFrontMatterPair = (state: ParserState): [string, string] => {
   const key = parseFrontMatterKey(state);
   whitespace(state);
   expect(state, ":");
   whitespace(state);
-  comment(state);
   const value = parseFrontMatterValue(state);
+  whitespace(state);
+  comment(state);
   return [key, value];
 };
 
-export const parseFrontMatter = (
-  state: ParserState
-): Record<string, string> => {
+export const parseFrontMatter = (state: ParserState): FrontMatter => {
   if (!parseFrontMatterDelimiter(state)) {
     return {};
   }
   newLine(state);
   whitespace(state);
-  const pairs: Record<string, string> = {};
+  const pairs: FrontMatter = {};
   while (state.input.slice(state.pos, state.pos + 3) !== "---") {
     comment(state);
     if (state.input[state.pos] === "\n") {
@@ -50,7 +56,11 @@ export const parseFrontMatter = (
       continue;
     }
     const [key, value] = parseFrontMatterPair(state);
-    pairs[key.trim()] = value.trim();
+    const trimmedValue = value.trim();
+
+    pairs[key.trim()] = isValidNumber(trimmedValue)
+      ? parseFloat(trimmedValue)
+      : trimmedValue;
     whitespace(state);
     comment(state);
     newLine(state);

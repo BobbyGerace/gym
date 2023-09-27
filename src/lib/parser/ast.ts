@@ -34,7 +34,9 @@ export type Exercise = {
   lineEnd: number;
 };
 
+export type FrontMatter = Record<string, string | number>;
+
 export type Workout = {
-  frontMatter: Record<string, string>;
+  frontMatter: FrontMatter;
   exercises: Exercise[];
 };

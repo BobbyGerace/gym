@@ -66,5 +66,55 @@ export const findNextLineStart = (state: ParserState): void => {
   if (state.input[state.pos] === "\n") {
     newLine(state);
     findNextLineStart(state);
+    let str = "";
   }
+};
+
+export const parseString = (state: ParserState): string => {
+  expect(state, '"');
+  let result = "";
+  while (state.pos < state.input.length && !/^["\n]/.test(state.char())) {
+    if (state.char() === "\\") {
+      state.inc();
+      switch (state.char()) {
+        case "n":
+          result += "\n";
+          break;
+        case "r":
+          result += "\r";
+          break;
+        case "t":
+          result += "\t";
+          break;
+        case "v":
+          result += "\v";
+          break;
+        case "f":
+          result += "\f";
+          break;
+        case "b":
+          result += "\b";
+          break;
+        case "\\":
+          result += "\\";
+          break;
+        case '"':
+          result += '"';
+          break;
+        default:
+          result += state.char();
+          break;
+      }
+    } else {
+      result += state.char();
+    }
+    state.inc();
+  }
+  expect(state, '"');
+
+  return result;
+};
+
+export const isValidNumber = (str: string): boolean => {
+  return !isNaN(str as any) && !isNaN(parseFloat(str));
 };

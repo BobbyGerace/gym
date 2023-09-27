@@ -90,3 +90,25 @@ hello there
 test("parseFrontMatter should error without colon", () => {
   expect(() => parseFrontMatter(frontMatterWithoutColon)).toThrow();
 });
+
+const frontMatterWithStrings = newState(`---
+"hello\\\\there": hello_world
+foo: "bar with a \\n new line" # and a comment
+---`);
+test("parseFrontMatter should parse strings", () => {
+  expect(parseFrontMatter(frontMatterWithStrings)).toEqual({
+    "hello\\there": "hello_world",
+    foo: "bar with a \n new line",
+  });
+});
+
+const frontMatterWithNumber = newState(`---
+hello: hello_world
+foo: -42.3
+---`);
+test("parseFrontMatter should parse numbers", () => {
+  expect(parseFrontMatter(frontMatterWithNumber)).toEqual({
+    hello: "hello_world",
+    foo: -42.3,
+  });
+});

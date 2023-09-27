@@ -23,14 +23,15 @@ export class Database {
       return fn(new Database(Database.connections[databaseFile]));
     }
 
-    if (databaseFile !== ":memory:" && !fileExists(databaseFile)) {
+    const isMemory = databaseFile === ":memory:";
+    if (!isMemory && !fileExists(databaseFile)) {
       await onNotExists(databaseFile);
     }
 
     const sqliteDb = await openDatabase(databaseFile);
     const instance = new Database(sqliteDb);
 
-    if (!(await instance.dbIsCurrentVersion())) {
+    if (!isMemory && !(await instance.dbIsCurrentVersion())) {
       await onWrongVersion();
     }
 

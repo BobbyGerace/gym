@@ -91,10 +91,6 @@ const parseBodyweight = (state: ParserState): "bw" => {
 
 const parseWeight = parseNumber;
 
-const isValidNumber = (str: string) => {
-  return !isNaN(str as any) && !isNaN(parseFloat(str));
-};
-
 const parseTag = (state: ParserState): Tag[] => {
   expect(state, "{");
 
@@ -107,11 +103,10 @@ const parseTag = (state: ParserState): Tag[] => {
     if (state.input[state.pos] === ":") {
       state.inc();
       whitespace(state);
-      const value = parseIdentifier(state);
-      tags.push({
-        key,
-        value: isValidNumber(value) ? parseFloat(value) : value,
-      });
+      const value = /^[\d-.]$/.test(state.input[state.pos])
+        ? parseNumber(state)
+        : parseIdentifier(state);
+      tags.push({ key, value });
       whitespace(state);
     } else {
       tags.push({ key });

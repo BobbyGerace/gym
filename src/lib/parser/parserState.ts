@@ -25,6 +25,10 @@ export class ParserState {
     return this._col;
   }
 
+  char() {
+    return this.input[this.pos];
+  }
+
   inc(n = 1) {
     this._pos += n;
     this._col += n;
