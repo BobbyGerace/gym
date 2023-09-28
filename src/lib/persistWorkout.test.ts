@@ -1,5 +1,5 @@
-import { Database } from "../../lib/database";
-import { parseWorkout } from "../../lib/parser";
+import { Database } from "./database";
+import { parseWorkout } from "./parser";
 import { PersistWorkout } from "./persistWorkout";
 
 const workout1 = `

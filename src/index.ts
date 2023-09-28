@@ -53,26 +53,29 @@ db.command("init")
 const workout = program.command("workout");
 const workoutController = new WorkoutController(config);
 workout
-  .command("save <fileName>")
+  .command("save <fileNames...>")
   .description("parse the workout and save it to the database")
   .action(workoutController.save.bind(workoutController));
 
 workout
   .command("new")
+  // TODO
   .option("-t, --template <templateFile>", "create from a template")
+  // TODO
   .option("-d, --date <date>", "specify a date")
   .description("create a new file and save it to the database")
   .action(workoutController.new.bind(workoutController));
 
 workout
   .command("edit <fileName>")
-  .option("-t, --template <templateFile>", "create from a template")
   .description("edit an existing file and save the changes to the database")
   .action(workoutController.edit.bind(workoutController));
 
 workout
-  .command("rm <fileName>")
-  .description("deletes a workout file and clears the database")
+  .command("rm <fileNames...>")
+  // TODO
+  .option("-D, --delete", "delete the file")
+  .description("removes a workout from the database")
   .action(workoutController.rm.bind(workoutController));
 
 workout

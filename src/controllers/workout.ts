@@ -1,8 +1,8 @@
-import { Config } from "../../lib/config";
-import { Database } from "../../lib/database";
-import { parseWorkout } from "../../lib/parser";
-import { PersistWorkout } from "./persistWorkout";
-import { yNPrompt } from "../../lib/prompt";
+import { Config } from "../lib/config";
+import { Database } from "../lib/database";
+import { parseWorkout } from "../lib/parser";
+import { PersistWorkout } from "../lib/persistWorkout";
+import { yNPrompt } from "../lib/prompt";
 import { spawn } from "child_process";
 
 import fs from "fs";
@@ -13,11 +13,13 @@ export class WorkoutController {
     this.config = config;
   }
 
-  async save(fileName: string) {
+  async save(fileNames: string[]) {
     Database.open(this.config.databaseFile, async (db) => {
-      console.log(`Saving workout from ${fileName} to database...`);
-      const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
-      await new PersistWorkout(db).saveWorkout(fileName, ast);
+      for (let i = 0; i < fileNames.length; i++) {
+        const fileName = fileNames[0];
+        const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
+        await new PersistWorkout(db).saveWorkout(fileName, ast);
+      }
     });
   }
 
@@ -29,10 +31,11 @@ export class WorkoutController {
     }
   }
 
-  async rm(fileName: string) {
+  async rm(fileNames: string[]) {
     Database.open(this.config.databaseFile, async (db) => {
-      console.log(`Deleting workout ${fileName}...`);
-      await new PersistWorkout(db).deleteWorkout(fileName);
+      for (let i = 0; i < fileNames.length; i++) {
+        await new PersistWorkout(db).deleteWorkout(fileNames[i]);
+      }
     });
   }
 
@@ -65,7 +68,7 @@ export class WorkoutController {
   private async afterSaveFlow(fileName: string) {
     const save = await yNPrompt("Save to database?");
     if (save) {
-      await this.save(fileName);
+      await this.save([fileName]);
       console.log(`Saved ${fileName} to database.`);
     }
   }

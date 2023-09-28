@@ -1,6 +1,5 @@
-import { Database } from "../../lib/database";
-import { parseWorkout } from "../../lib/parser";
-import { Workout, Exercise, Set } from "../../lib/parser/ast";
+import { Database } from "./database";
+import { Workout, Exercise, Set } from "./parser/ast";
 import fs from "fs";
 
 type ExerciseWithId = Exercise & { id: number };

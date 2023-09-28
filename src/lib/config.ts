@@ -8,6 +8,8 @@ export type Config = {
   workoutDir: string;
   unitSystem: "imperial" | "metric";
   e1rmFormula: "brzycki" | "epley";
+  commitAfterChange: "prompt" | "always" | "never";
+  pushAfterCommit: boolean;
 };
 
 const defaultConfig: Config = {
@@ -17,6 +19,8 @@ const defaultConfig: Config = {
   workoutDir: "./workouts",
   unitSystem: "imperial",
   e1rmFormula: "brzycki",
+  commitAfterChange: "prompt",
+  pushAfterCommit: true,
 };
 
 let cachedConfig: Config | null = null;
