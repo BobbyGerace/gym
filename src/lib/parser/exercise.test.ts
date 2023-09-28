@@ -132,3 +132,27 @@ test("parseExercise should parse sets with comments", () => {
     ],
   });
 });
+
+// One day we should probably allow arbitrarly strings as exercise names
+// but right now it's too hard to get the autocomplete/new exercise check to work
+// correctly
+// const exerciseWithString = newState(
+//   '1) "All kinds of \\n illegal {characters!}" '
+// );
+// test('parseExercise should parse string names"', () => {
+//   expect(parseExercise(exerciseWithString)).toEqual({
+//     name: "All kinds of \n illegal {characters!}",
+//     sequence: 1,
+//     subsequence: null,
+//     sets: [],
+//     lineStart: 1,
+//     lineEnd: 1,
+//   });
+// });
+
+const exerciseWithIllegalChars = newState(
+  "1) All kinds of \n illegal {characters!}"
+);
+test("parseExercise should not parse illegal characters", () => {
+  expect(() => parseExercise(exerciseWithIllegalChars)).toThrow();
+});

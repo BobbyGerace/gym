@@ -7,7 +7,7 @@ export const yNPrompt = (question: string): Promise<boolean> => {
   });
 
   return new Promise((resolve) => {
-    rl.question(`${question} [y/N]`, (answer) => {
+    rl.question(`${question} [y/N]\n`, (answer) => {
       rl.close();
       resolve(answer.trim().toLowerCase() === "y");
     });

@@ -34,6 +34,15 @@ test("parseSet should parse bodyweight", () => {
   });
 });
 
+const setWithRepeatSets = newState(`405x1 10 sets`);
+test("parseSet should parse repeat sets", () => {
+  expect(parseSet(setWithRepeatSets)).toEqual({
+    weight: 405,
+    reps: [1],
+    sets: 10,
+  });
+});
+
 const weightUnits = ["lb", "kg"];
 test("parseSet should parse weight units", () => {
   for (const unit of weightUnits.concat(
@@ -98,7 +107,9 @@ test("parseSet should parse lots of tags", () => {
   });
 });
 
-const terms = `100 x2,3,4,5 @10 1:30:00 100m {chains:123,another}`.split(" ");
+const terms = `100 x2,3,4,5 @10 1:30:00 100m 3sets {chains:123,another}`.split(
+  " "
+);
 const permutations = (terms: string[]): string[][] => {
   if (terms.length === 1) {
     return [terms];
@@ -123,9 +134,14 @@ test("parseSet should parse all permutations", () => {
       weight: 100,
       reps: [2, 3, 4, 5],
       rpe: 10,
+      sets: 3,
       time: { hours: 1, minutes: 30, seconds: 0 },
       distance: { value: 100, unit: "m" },
       tags: [{ key: "chains", value: 123 }, { key: "another" }],
     });
   }
+});
+
+test("parseSet should throw if it encounters an invalid term", () => {
+  expect(() => parseSet(newState("100x3,4,5 potato"))).toThrow();
 });

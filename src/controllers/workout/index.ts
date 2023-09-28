@@ -1,11 +1,7 @@
 import { Config } from "../../lib/config";
-import {
-  Database,
-  healthCheckFatal,
-  healthCheckPrompt,
-} from "../../lib/database";
+import { Database } from "../../lib/database";
 import { parseWorkout } from "../../lib/parser";
-import { PersistWorkout } from "./persist-workout";
+import { PersistWorkout } from "./persistWorkout";
 import { yNPrompt } from "../../lib/prompt";
 import { spawn } from "child_process";
 
@@ -18,16 +14,14 @@ export class WorkoutController {
   }
 
   async save(fileName: string) {
-    await healthCheckFatal(this.config.databaseFile);
-
-    console.log(`Saving workout from ${fileName} to database...`);
     Database.open(this.config.databaseFile, async (db) => {
+      console.log(`Saving workout from ${fileName} to database...`);
       const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
       await new PersistWorkout(db).saveWorkout(fileName, ast);
     });
   }
 
-  async new(options: { template: string }) {
+  async new(options: { template: string; date: string }) {
     if (options.template) {
       console.log(`Creating new workout from template ${options.template}...`);
     } else {
@@ -36,17 +30,14 @@ export class WorkoutController {
   }
 
   async rm(fileName: string) {
-    await healthCheckFatal(this.config.databaseFile);
-
-    console.log(`Deleting workout ${fileName}...`);
     Database.open(this.config.databaseFile, async (db) => {
+      console.log(`Deleting workout ${fileName}...`);
       await new PersistWorkout(db).deleteWorkout(fileName);
     });
   }
 
   async edit(fileName: string) {
-    await healthCheckPrompt(this.config.databaseFile);
-
+    Database.open(this.config.databaseFile, () => Promise.resolve());
     this.openInEditor(fileName);
   }
 
@@ -61,7 +52,6 @@ export class WorkoutController {
     const args = [...editorArgs, fileName];
 
     spawn(editor, args, { stdio: "inherit" }).on("exit", (code) => {
-      console.log("Exited with code", code);
       if (code === 0) {
         this.afterSaveFlow(fileName);
       } else {
@@ -76,7 +66,7 @@ export class WorkoutController {
     const save = await yNPrompt("Save to database?");
     if (save) {
       await this.save(fileName);
-      console.log("Saved to database.");
+      console.log(`Saved ${fileName} to database.`);
     }
   }
 }

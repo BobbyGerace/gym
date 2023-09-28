@@ -42,6 +42,10 @@ export const newLine = (state: ParserState): string => {
 };
 
 export const parseIdentifier = (state: ParserState): string => {
+  // Only allow identifiers to start with letters and underscore
+  if (!/^[a-zA-Z_]$/.test(state.char())) {
+    error(state, `Expected identifier but got ${state.char()}`);
+  }
   const key = takeWhile(state, (char) => /[a-zA-Z0-9_-]/.test(char));
   return key;
 };

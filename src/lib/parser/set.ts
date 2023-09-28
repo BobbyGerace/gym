@@ -7,8 +7,11 @@ import {
   ValueWithUnit,
   allUnits,
   isDistanceValueWithUnit,
+  isSets,
   isWeightValueWithUnit,
 } from "./ast";
+
+const unitStartRegex = new RegExp(`^[${allUnits.map((u) => u[0])}]$`, "i");
 
 const parseNumber = (state: ParserState): number => {
   let num = "";
@@ -138,7 +141,7 @@ export const parseSet = (state: ParserState): Set => {
   };
 
   whitespace(state);
-  while (true) {
+  while (!state.isEOF() && state.char() !== "\n") {
     const char = state.input[state.pos];
     if (char === "x") setSet("reps", parseReps(state));
     else if (char === "@") setSet("rpe", parseRpe(state));
@@ -156,13 +159,16 @@ export const parseSet = (state: ParserState): Set => {
       if (state.input[state.pos] === ":") {
         rollback();
         setSet("time", parseTime(state));
-      } else if (/^[mfickl]$/i.test(state.input[state.pos])) {
+      } else if (unitStartRegex.test(state.input[state.pos])) {
         rollback();
         const value = parseWithUnit(state);
         if (isWeightValueWithUnit(value)) {
           setSet("weight", value);
         } else if (isDistanceValueWithUnit(value)) {
           setSet("distance", value);
+        } else if (isSets(value)) {
+          // lolol
+          setSet("sets", value.value);
         } else {
           error(state, `Expected weight or distance, got ${value.unit}`);
         }
@@ -170,8 +176,10 @@ export const parseSet = (state: ParserState): Set => {
         rollback();
         setSet("weight", parseWeight(state));
       }
-    } else {
+    } else if (/[#\n]/.test(char)) {
       break;
+    } else {
+      error(state, `Expected set property but found ${char}`);
     }
     whitespace(state);
   }

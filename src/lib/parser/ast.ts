@@ -5,10 +5,16 @@ export type Set = Partial<{
   distance: ValueWithUnit<typeof distanceUnits[number]>;
   time: Time;
   tags: Tag[];
+  sets: number;
 }>;
 export const distanceUnits = ["m", "km", "mi", "ft", "in", "cm"] as const;
 export const weightUnits = ["lb", "kg"] as const;
-export const allUnits = [...distanceUnits, ...weightUnits] as const;
+export const setsUnits = ["sets", "set"] as const;
+export const allUnits = [
+  ...distanceUnits,
+  ...weightUnits,
+  ...setsUnits,
+] as const;
 
 export const isWeightValueWithUnit = (
   value: ValueWithUnit<typeof allUnits[number]>
@@ -18,6 +24,10 @@ export const isDistanceValueWithUnit = (
   value: ValueWithUnit<typeof allUnits[number]>
 ): value is ValueWithUnit<typeof distanceUnits[number]> =>
   distanceUnits.includes(value.unit as any);
+export const isSets = (
+  value: ValueWithUnit<typeof allUnits[number]>
+): value is ValueWithUnit<typeof setsUnits[number]> =>
+  setsUnits.includes(value.unit as any);
 
 export type Time = { hours: number; minutes: number; seconds: number };
 export type ValueWithUnit<U extends string> = { value: number; unit: U };

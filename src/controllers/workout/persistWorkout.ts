@@ -4,7 +4,7 @@ import { Workout, Exercise, Set } from "../../lib/parser/ast";
 import fs from "fs";
 
 type ExerciseWithId = Exercise & { id: number };
-type FlatSet = Omit<Set, "reps"> & { reps?: number };
+type FlatSet = Omit<Set, "reps" | "sets"> & { reps?: number };
 
 export class PersistWorkout {
   private db: Database;
@@ -58,12 +58,15 @@ export class PersistWorkout {
         (row) => row.name.toLowerCase() === exerciseName.toLowerCase()
       );
     });
-    const newExerciseRows = await this.db.query<{ id: number; name: string }>(
-      `INSERT INTO exercise (name) VALUES ${newExerciseNames
-        .map(() => "(?)")
-        .join(", ")};`,
-      newExerciseNames
-    );
+    let newExerciseRows: { id: number; name: string }[] = [];
+    if (newExerciseNames.length > 0) {
+      newExerciseRows = await this.db.query<{ id: number; name: string }>(
+        `INSERT INTO exercise (name) VALUES ${newExerciseNames
+          .map(() => "(?)")
+          .join(", ")}`,
+        newExerciseNames
+      );
+    }
 
     const exIdMap = new Map<string, number>();
     existingExerciseRows.forEach((row) => {
@@ -132,7 +135,7 @@ export class PersistWorkout {
     });
 
     const rows = await this.db.query<{ id: number }>(
-      `INSERT INTO exercise_set (
+      `INSERT INTO \"set\" (
       weight_value,
       weight_unit,
       reps,
@@ -170,7 +173,13 @@ export class PersistWorkout {
 }
 
 const flattenSets = (sets: Set[]): FlatSet[] =>
-  sets.flatMap((set) => {
-    if (typeof set.reps === "undefined") return [set as FlatSet];
-    return set.reps.map((rep) => ({ ...set, reps: rep }));
-  });
+  sets
+    .flatMap(({ sets, ...rest }): Set[] => {
+      if (!sets) return [rest];
+
+      return Array.from({ length: sets }).fill(rest) as Set[];
+    })
+    .flatMap((set) => {
+      if (typeof set.reps === "undefined") return [set as FlatSet];
+      return set.reps.map((rep) => ({ ...set, reps: rep }));
+    });

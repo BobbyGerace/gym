@@ -44,9 +44,12 @@ export class Database {
     }
   }
 
-  initializeDatabase(): Promise<void> {
-    return new Promise((resolve) => {
-      const db = this.db;
+  static async initializeDatabase(
+    databaseFile: string,
+    beforeClose?: (db: Database) => Promise<void>
+  ): Promise<void> {
+    const db = await openDatabase(databaseFile);
+    await new Promise<void>((resolve) => {
       // Create tables
       db.serialize(() => {
         // workout table - id autoincrements
@@ -86,7 +89,7 @@ export class Database {
 
         // set table
         db.run(`
-            CREATE TABLE exercise_set (
+            CREATE TABLE "set" (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               weight_value REAL,
               weight_unit TEXT,
@@ -122,6 +125,10 @@ export class Database {
         );
       });
     });
+
+    if (beforeClose) await beforeClose(new Database(db));
+
+    return await closeDatabase(db);
   }
 
   query<T>(sql: string, args?: any[]): Promise<T[]> {

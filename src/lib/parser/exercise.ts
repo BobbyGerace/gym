@@ -5,6 +5,8 @@ import {
   takeWhile,
   whitespace,
   expect,
+  parseString,
+  error,
 } from "./util";
 import { parseSet } from "./set";
 import { Exercise, Set } from "./ast";
@@ -20,7 +22,12 @@ const parseSubsequence = (state: ParserState): string | null => {
 };
 
 const parseName = (state: ParserState): string => {
-  const name = takeWhile(state, (char) => /[^#\n]/.test(char));
+  // One day we should probably allow arbitrarly strings as exercise names
+  // but right now it's too hard to get the autocomplete/new exercise check to work
+  // correctly
+  // if (state.char() === '"') return parseString(state);
+
+  const name = takeWhile(state, (char) => /[^#\n{}]/.test(char));
   return name.trim();
 };
 
@@ -35,13 +42,18 @@ export const parseExercise = (state: ParserState): Exercise => {
   state.inc();
   whitespace(state);
   const name = parseName(state);
+  whitespace(state);
   comment(state);
+
+  if (!state.isEOF() && state.char() !== "\n") {
+    error(state, `Expected end of line but got ${state.char()}`);
+  }
 
   findNextLineStart(state);
 
   const sets: Set[] = [];
   let lineEnd = state.line;
-  while (true) {
+  while (state.pos < state.input.length) {
     if (isNewExercise(state)) {
       lineEnd = state.line - 1;
       break;

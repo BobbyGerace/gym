@@ -1,6 +1,6 @@
 import { Database } from "../../lib/database";
 import { parseWorkout } from "../../lib/parser";
-import { PersistWorkout } from "./persist-workout";
+import { PersistWorkout } from "./persistWorkout";
 
 const workout1 = `
   ---
@@ -11,7 +11,7 @@ const workout1 = `
   500x1@9
 
   2) Barbell Row
-  225x5,5,5
+  225x5,5,5 3 sets
 `;
 
 const workout2 = `
@@ -29,20 +29,8 @@ const workout2 = `
   135x12,12,12
 `;
 
-// TODO: move this to a database-specific test file
-test("database works", async () => {
-  await Database.open(":memory:", async (db) => {
-    await db.initializeDatabase();
-    const rows = await db.query("select * from key_value");
-
-    expect(rows.length).toBe(1);
-  });
-});
-
 test("saves workout", async () => {
-  await Database.open(":memory:", async (db) => {
-    await db.initializeDatabase();
-
+  await Database.initializeDatabase(":memory:", async (db) => {
     const fileName = "2023-09-24.gym";
 
     const ast = parseWorkout(workout1);
@@ -51,20 +39,20 @@ test("saves workout", async () => {
     const wRows = await db.query<any>("select * from workout");
     const exRows = await db.query<any>("select * from exercise");
     const exIRows = await db.query<any>("select * from exercise_instance");
-    const sRows = await db.query<any>("select * from exercise_set");
+    const sRows = await db.query<any>('select * from "set"');
     expect(wRows.length).toBe(1);
     expect(wRows[0].file_name).toBe(fileName);
     expect(wRows[0].front_matter).toBe('{"hello":"world"}');
     expect(exRows.length).toBe(2);
     expect(exIRows.length).toBe(2);
-    expect(sRows.length).toBe(4);
+
+    // this part tests the flattening behavior for both kinds of repeat sets
+    expect(sRows.length).toBe(10);
   });
 });
 
 test("creates exercises correctly", async () => {
-  await Database.open(":memory:", async (db) => {
-    await db.initializeDatabase();
-
+  await Database.initializeDatabase(":memory:", async (db) => {
     const persist = new PersistWorkout(db);
     await persist.saveWorkout("2023-09-24.gym", parseWorkout(workout1));
     await persist.saveWorkout("2023-09-25.gym", parseWorkout(workout2));
@@ -76,8 +64,7 @@ test("creates exercises correctly", async () => {
 });
 
 test("removes workout", async () => {
-  await Database.open(":memory:", async (db) => {
-    await db.initializeDatabase();
+  await Database.initializeDatabase(":memory:", async (db) => {
     const fileName = "2023-09-24.gym";
 
     const persist = new PersistWorkout(db);
@@ -87,7 +74,7 @@ test("removes workout", async () => {
     const wRows = await db.query<any>("select * from workout");
     const exRows = await db.query<any>("select * from exercise");
     const exIRows = await db.query<any>("select * from exercise_instance");
-    const sRows = await db.query<any>("select * from exercise_set");
+    const sRows = await db.query<any>('select * from "set"');
     expect(wRows.length).toBe(0);
     expect(exRows.length).toBe(0);
     expect(exIRows.length).toBe(0);
@@ -96,8 +83,7 @@ test("removes workout", async () => {
 });
 
 test("overwrites workout", async () => {
-  await Database.open(":memory:", async (db) => {
-    await db.initializeDatabase();
+  await Database.initializeDatabase(":memory:", async (db) => {
     const fileName = "2023-09-24.gym";
 
     const persist = new PersistWorkout(db);
@@ -107,7 +93,7 @@ test("overwrites workout", async () => {
     const wRows = await db.query<any>("select * from workout");
     const exRows = await db.query<any>("select * from exercise");
     const exIRows = await db.query<any>("select * from exercise_instance");
-    const sRows = await db.query<any>("select * from exercise_set");
+    const sRows = await db.query<any>('select * from "set"');
     expect(wRows.length).toBe(1);
     expect(exRows.length).toBe(3);
     expect(exIRows.length).toBe(3);

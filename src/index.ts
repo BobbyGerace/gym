@@ -60,8 +60,15 @@ workout
 workout
   .command("new")
   .option("-t, --template <templateFile>", "create from a template")
-  .description("create a new file and open it in an editor")
+  .option("-d, --date <date>", "specify a date")
+  .description("create a new file and save it to the database")
   .action(workoutController.new.bind(workoutController));
+
+workout
+  .command("edit <fileName>")
+  .option("-t, --template <templateFile>", "create from a template")
+  .description("edit an existing file and save the changes to the database")
+  .action(workoutController.edit.bind(workoutController));
 
 workout
   .command("rm <fileName>")
