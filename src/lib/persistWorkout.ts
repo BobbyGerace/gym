@@ -11,12 +11,19 @@ export class PersistWorkout {
     this.db = db;
   }
 
+  dateFromFileName(fileName: string): string | null {
+    const matches = fileName.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (!matches) return null;
+    else return matches[0];
+  }
+
   async saveWorkout(fileName: string, ast: Workout): Promise<number> {
     await this.deleteWorkout(fileName);
 
     const args = [
       fileName,
       JSON.stringify(ast.frontMatter), // frontMatter
+      this.dateFromFileName(fileName),
       new Date().toISOString(), // createdAt
       new Date().toISOString(), // updatedAt
     ];
@@ -25,8 +32,8 @@ export class PersistWorkout {
     // of the workout
     const rows = await this.db.query<{ id: number }>(
       `
-      INSERT INTO workout (file_name, front_matter, created_at, updated_at)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO workout (file_name, front_matter, workout_date, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?)
       RETURNING id;
     `,
       args
@@ -62,7 +69,7 @@ export class PersistWorkout {
       newExerciseRows = await this.db.query<{ id: number; name: string }>(
         `INSERT INTO exercise (name) VALUES ${newExerciseNames
           .map(() => "(?)")
-          .join(", ")}`,
+          .join(", ")} returning id, name;`,
         newExerciseNames
       );
     }
@@ -115,7 +122,7 @@ export class PersistWorkout {
 
       let weightUnit: string | null = null;
       if (set.weight === "bw") weightUnit = "bw";
-      else if (typeof set.weight === "number") weightUnit = "lb";
+      else if (typeof set.weight === "number") weightUnit = null;
       else if (typeof set.weight === "object") weightUnit = set.weight.unit;
 
       return [

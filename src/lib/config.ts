@@ -10,6 +10,7 @@ export type Config = {
   e1rmFormula: "brzycki" | "epley";
   commitAfterChange: "prompt" | "always" | "never";
   pushAfterCommit: boolean;
+  locale: string;
 };
 
 const defaultConfig: Config = {
@@ -21,6 +22,7 @@ const defaultConfig: Config = {
   e1rmFormula: "brzycki",
   commitAfterChange: "prompt",
   pushAfterCommit: true,
+  locale: "en-US",
 };
 
 let cachedConfig: Config | null = null;

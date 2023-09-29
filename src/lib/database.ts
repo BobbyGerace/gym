@@ -56,8 +56,9 @@ export class Database {
         db.run(`
             CREATE TABLE workout (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
-              file_name TEXT,
+              file_name TEXT NOT NULL,
               front_matter JSON,
+              workout_date DATETIME NOT NULL,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               UNIQUE(file_name)
