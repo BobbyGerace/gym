@@ -11,11 +11,13 @@ program.version("1.0.0");
 
 const exercise = program.command("exercise");
 
-// Handle errors better
-function route<T extends Function>(fn: T): T {
+// Handle errors better, and make the types play nice
+function route<T extends (...args: any) => any>(
+  fn: T
+): (...args: Parameters<T>) => void {
   return (async (...args: any) => {
     try {
-      return await fn(...args);
+      await fn(...args);
     } catch (e) {
       if (e instanceof Error) console.error("ERROR: " + e.message);
       process.exit(1);
@@ -45,7 +47,7 @@ const db = program.command("db");
 
 const dbController = new DbController(config);
 db.command("rebuild")
-  .description("rebuild the database")
+  .description("Delete, reinitialize, and sync the database")
   .action(route(dbController.rebuild));
 
 db.command("init")
@@ -53,40 +55,41 @@ db.command("init")
   .action(route(dbController.init));
 
 db.command("sync")
-  .description("Parses all workouts and brings the database up to date")
+  .description("Parse all workouts and bring the database up to date")
+  .option("-y", "--yes", "Automatically accept changes")
   .action(route(dbController.sync));
 
 const workout = program.command("workout");
 const workoutController = new WorkoutController(config);
 workout
   .command("save <fileNames...>")
-  .description("parse the workout and save it to the database")
+  .description("Parse the workout and save it to the database")
   .action(route(workoutController.save));
 
 workout
   .command("new")
   // TODO
-  .option("-t, --template <templateFile>", "create from a template")
+  .option("-t, --template <templateFile>", "Create from a template")
   // TODO
-  .option("-d, --date <date>", "specify a date")
-  .description("create a new file and save it to the database")
+  .option("-d, --date <date>", "Specify a date")
+  .description("Create a new file and save it to the database")
   .action(route(workoutController.new));
 
 workout
   .command("edit <fileName>")
-  .description("edit an existing file and save the changes to the database")
+  .description("Edit an existing file and save the changes to the database")
   .action(route(workoutController.edit));
 
 workout
   .command("rm <fileNames...>")
   // TODO
-  .option("-D, --delete", "delete the file")
-  .description("removes a workout from the database")
+  .option("-D, --delete", "Delete the file")
+  .description("Removes a workout from the database")
   .action(route(workoutController.rm));
 
 workout
   .command("parse <fileName>")
-  .description("tries to parse a file and outputs JSON")
+  .description("Tries to parse a file and outputs JSON")
   .action(route(workoutController.parse));
 
 program.parse(process.argv);

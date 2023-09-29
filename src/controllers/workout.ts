@@ -14,10 +14,17 @@ export class WorkoutController {
 
   save = async (fileNames: string[]) => {
     await Database.open(this.config.databaseFile, async (db) => {
+      const persist = new PersistWorkout(db);
       for (let i = 0; i < fileNames.length; i++) {
         const fileName = fileNames[i];
-        const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
-        await new PersistWorkout(db).saveWorkout(fileName, ast);
+        try {
+          const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
+          await persist.saveWorkout(fileName, ast);
+        } catch (e) {
+          if (e instanceof Error)
+            throw new Error(`Problem saving file ${fileName}: ${e.message}`);
+          else throw e;
+        }
       }
     });
   };

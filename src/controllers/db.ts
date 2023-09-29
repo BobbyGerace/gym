@@ -3,6 +3,8 @@ import { Config } from "../lib/config";
 import path from "path";
 import fs from "fs";
 import { yNPrompt } from "../lib/prompt";
+import { PersistWorkout } from "../lib/persistWorkout";
+import { parseWorkout } from "../lib/parser";
 
 const asyncNoop = () => Promise.resolve();
 
@@ -18,8 +20,12 @@ export class DbController {
       fs.unlinkSync(filePath);
     }
 
+    console.log("Initializing database...");
     await Database.initializeDatabase(filePath);
-    console.log("Database successfully rebuilt.");
+    console.log("Syncing database...");
+    if (await this.sync({ yes: true })) {
+      console.log("Database successfully rebuilt.");
+    }
   };
 
   init = async () => {
@@ -33,10 +39,12 @@ export class DbController {
     }
   };
 
-  sync = async () => {
-    Database.open(this.config.databaseFile, async (db) => {
+  sync = async (options: { yes: boolean }): Promise<boolean> => {
+    return await Database.open(this.config.databaseFile, async (db) => {
       const workoutPath = path.join(process.cwd(), this.config.workoutDir);
-      const files = fs.readdirSync(workoutPath);
+      const files = fs
+        .readdirSync(workoutPath)
+        .filter((d) => d.match(/^\d{4}-\d{2}-\d{2}.*\.gym$/));
 
       const lastDbUpdateByFileName = (
         await db.query<{ file_name: string; updated_at: string }>(
@@ -67,19 +75,39 @@ export class DbController {
 
       if (toDelete.length + toUpdate.length + toCreate.length === 0) {
         console.log("Already up to date.");
-        return process.exit(0);
+        return true;
       }
 
       console.log("The following changes will be made:");
-      console.log(`${toCreate.length} files created`);
-      console.log(`${toUpdate.length} files updated`);
-      console.log(`${toDelete.length} files deleted`);
+      console.log(`  ${toCreate.length} files created`);
+      console.log(`  ${toUpdate.length} files updated`);
+      console.log(`  ${toDelete.length} files deleted`);
 
-      const confirmed = await yNPrompt("Continue?");
+      const confirmed = options.yes || (await yNPrompt("Continue?"));
+      if (!confirmed) return false;
 
-      if (!confirmed) return process.exit(0);
+      const persist = new PersistWorkout(db);
+      for (const file of toDelete) {
+        await persist.deleteWorkout(file);
+      }
+      for (const file of toUpdate.concat(toCreate)) {
+        try {
+          const fileName = path.join(
+            process.cwd(),
+            this.config.workoutDir,
+            file
+          );
+          const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
+          await persist.saveWorkout(file, ast);
+        } catch (e) {
+          if (e instanceof Error)
+            throw new Error(`Problem saving file ${file}: ${e.message}`);
+          else throw e;
+        }
+      }
 
-      console.log("ayyyy lmao");
+      console.log("Database synced successfully.");
+      return true;
     });
   };
 }
