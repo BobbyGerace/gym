@@ -29,7 +29,7 @@ const parseNumber = (state: ParserState): number => {
   const result = parseFloat(num);
 
   if (isNaN(result)) {
-    error(state, `Expected number, got ${num}`);
+    error(state, `Expected number, got ${state.char()}`);
   }
   return result;
 };

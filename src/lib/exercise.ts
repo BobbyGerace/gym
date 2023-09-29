@@ -1,6 +1,5 @@
 import { Config } from "./config";
 import { Database } from "./database";
-import { formatDate } from "./util";
 
 const MAX_REPS_FOR_PRS = 12;
 
@@ -71,19 +70,26 @@ export class Exercise {
     return results;
   }
 
-  async printRepMaxPrs(exId: number) {
-    const prs = await this.getRepMaxPrs(exId);
-    const defaultWeightUnit = this.config.unitSystem === "metric" ? "kg" : "lb";
-    prs.forEach((pr) => {
-      const rm = `${pr.reps}RM: ${pr.weight}${
-        pr.weightUnit ?? defaultWeightUnit
-      }`;
-      const instance =
-        pr.reps === pr.actualReps ? "" : `${pr.weight}x${pr.reps} on `;
-
-      console.log(
-        `${rm} (${instance}${formatDate(pr.date, this.config.locale)})`
-      );
-    });
+  async getHistory(exId: number, num = 10) {
+    return await this.db.query<{
+      lineStart: number;
+      lineEnd: number;
+      fileName: string;
+      date: string;
+    }>(
+      `
+      select 
+        ei.line_start as lineStart,
+        ei.line_end as lineEnd,
+        w.file_name as fileName,
+        w.workout_date as "date"
+      from exercise_instance ei
+        inner join workout w on w.id = ei.workout_id
+      where ei.exercise_id = ?
+      order by w.workout_date desc
+      limit ?;
+    `,
+      [exId, num]
+    );
   }
 }

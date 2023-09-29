@@ -1,61 +1,67 @@
 import { Command } from "commander";
 import { getConfig } from "./lib/config";
-import { Database } from "./lib/database";
 import { DbController } from "./controllers/db";
 import { WorkoutController } from "./controllers/workout";
+import { ExerciseController } from "./controllers/exercise";
 
 const config = getConfig();
 const program = new Command();
 
-// Define the version
 program.version("1.0.0");
 
-// Exercise-related commands
 const exercise = program.command("exercise");
 
+// Handle errors better
+function route<T extends Function>(fn: T): T {
+  return (async (...args: any) => {
+    try {
+      return await fn(...args);
+    } catch (e) {
+      if (e instanceof Error) console.error("ERROR: " + e.message);
+      process.exit(1);
+    }
+  }) as any;
+}
+
+const exerciseController = new ExerciseController(config);
 exercise
   .command("list")
-  .description("output a list of exercises")
-  .action(() => {
-    console.log("Listing exercises...");
-  });
+  .description("output a list of exercises in the database")
+  .action(route(exerciseController.list));
 
 exercise
   .command("prs <exerciseName>")
   .description("outputs PRs for the given exercise")
-  .action((exerciseName) => {
-    console.log(`Fetching PRs for ${exerciseName}...`);
-  });
+  .action(route(exerciseController.prs));
 
 exercise
   .command("history <exerciseName>")
   .option("-n, --number <number>", "number of items to find")
-  .option("-p, --print", "print the exercises in a readable format")
+  .option("-l, --locations-only", "Only print the file names and line numbers")
   .description("outputs file names and line numbers for a given exercise")
-  .action((exerciseName, options) => {
-    console.log(`Fetching history for ${exerciseName}...`);
-    // Use options.number and options.print as needed
-  });
+  .action(route(exerciseController.history));
 
-// Database-related commands
 const db = program.command("db");
 
 const dbController = new DbController(config);
 db.command("rebuild")
   .description("rebuild the database")
-  .action(dbController.rebuild.bind(dbController));
+  .action(route(dbController.rebuild));
 
 db.command("init")
   .description("Initialize the database")
-  .action(dbController.init.bind(dbController));
+  .action(route(dbController.init));
 
-// Workout-related commands
+db.command("sync")
+  .description("Parses all workouts and brings the database up to date")
+  .action(route(dbController.sync));
+
 const workout = program.command("workout");
 const workoutController = new WorkoutController(config);
 workout
   .command("save <fileNames...>")
   .description("parse the workout and save it to the database")
-  .action(workoutController.save.bind(workoutController));
+  .action(route(workoutController.save));
 
 workout
   .command("new")
@@ -64,24 +70,24 @@ workout
   // TODO
   .option("-d, --date <date>", "specify a date")
   .description("create a new file and save it to the database")
-  .action(workoutController.new.bind(workoutController));
+  .action(route(workoutController.new));
 
 workout
   .command("edit <fileName>")
   .description("edit an existing file and save the changes to the database")
-  .action(workoutController.edit.bind(workoutController));
+  .action(route(workoutController.edit));
 
 workout
   .command("rm <fileNames...>")
   // TODO
   .option("-D, --delete", "delete the file")
   .description("removes a workout from the database")
-  .action(workoutController.rm.bind(workoutController));
+  .action(route(workoutController.rm));
 
 workout
   .command("parse <fileName>")
   .description("tries to parse a file and outputs JSON")
-  .action(workoutController.parse.bind(workoutController));
+  .action(route(workoutController.parse));
 
 program.parse(process.argv);
 

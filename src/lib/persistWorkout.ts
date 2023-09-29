@@ -1,6 +1,7 @@
 import { Database } from "./database";
 import { Workout, Exercise, Set } from "./parser/ast";
 import fs from "fs";
+import path from "path";
 
 type ExerciseWithId = Exercise & { id: number };
 type FlatSet = Omit<Set, "reps" | "sets"> & { reps?: number };
@@ -17,7 +18,8 @@ export class PersistWorkout {
     else return matches[0];
   }
 
-  async saveWorkout(fileName: string, ast: Workout): Promise<number> {
+  async saveWorkout(filePath: string, ast: Workout): Promise<number> {
+    const fileName = path.parse(filePath).base;
     await this.deleteWorkout(fileName);
 
     const args = [

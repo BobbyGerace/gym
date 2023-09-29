@@ -32,7 +32,7 @@ let cachedConfig: Config | null = null;
 export const getConfig = (): Config => {
   if (cachedConfig) return cachedConfig;
 
-  const configPath = path.join(process.cwd(), "./gymconfig.json");
+  const configPath = path.join(process.cwd(), "gymconfig.json");
   let config: Config = defaultConfig;
   if (fs.existsSync(configPath)) {
     const fileConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));

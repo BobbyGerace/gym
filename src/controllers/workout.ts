@@ -4,7 +4,6 @@ import { parseWorkout } from "../lib/parser";
 import { PersistWorkout } from "../lib/persistWorkout";
 import { yNPrompt } from "../lib/prompt";
 import { spawn } from "child_process";
-
 import fs from "fs";
 
 export class WorkoutController {
@@ -13,41 +12,43 @@ export class WorkoutController {
     this.config = config;
   }
 
-  async save(fileNames: string[]) {
-    Database.open(this.config.databaseFile, async (db) => {
+  save = async (fileNames: string[]) => {
+    await Database.open(this.config.databaseFile, async (db) => {
       for (let i = 0; i < fileNames.length; i++) {
-        const fileName = fileNames[0];
+        const fileName = fileNames[i];
         const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
         await new PersistWorkout(db).saveWorkout(fileName, ast);
       }
     });
-  }
+  };
 
-  async new(options: { template: string; date: string }) {
+  // TODO: this should be able to read from stdin
+  new = (options: { template: string; date: string }) => {
     if (options.template) {
       console.log(`Creating new workout from template ${options.template}...`);
     } else {
       console.log("Creating new workout...");
     }
-  }
+  };
 
-  async rm(fileNames: string[]) {
-    Database.open(this.config.databaseFile, async (db) => {
+  rm = async (fileNames: string[]) => {
+    await Database.open(this.config.databaseFile, async (db) => {
       for (let i = 0; i < fileNames.length; i++) {
         await new PersistWorkout(db).deleteWorkout(fileNames[i]);
       }
     });
-  }
+  };
 
-  async edit(fileName: string) {
-    Database.open(this.config.databaseFile, () => Promise.resolve());
+  edit = async (fileName: string) => {
+    await Database.open(this.config.databaseFile, () => Promise.resolve());
     this.openInEditor(fileName);
-  }
+  };
 
-  async parse(fileName: string) {
+  // TODO: this should be able to read from stdin
+  parse = (fileName: string) => {
     const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
     console.log(JSON.stringify(ast, null, 2));
-  }
+  };
 
   private openInEditor(fileName: string) {
     const editor = this.config.editor;

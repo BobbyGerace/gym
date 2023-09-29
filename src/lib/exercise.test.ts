@@ -107,8 +107,6 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         workoutId: 1,
       },
     ]);
-
-    await exercise.printRepMaxPrs(exerciseId);
   });
 });
 
