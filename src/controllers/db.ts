@@ -7,8 +7,6 @@ import { PersistWorkout } from "../lib/persistWorkout";
 import { parseWorkout } from "../lib/parser";
 import { findChangedFiles } from "../lib/findChangedFiles";
 
-const asyncNoop = () => Promise.resolve();
-
 export class DbController {
   config: Config;
   constructor(config: Config) {

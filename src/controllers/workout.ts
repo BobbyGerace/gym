@@ -31,6 +31,15 @@ export class WorkoutController {
 
   // TODO: this should be able to read from stdin
   new = (options: { template: string; date: string }) => {
+    // create name from date or current date
+    // append something if the file already exists
+    // read file if template, or read from stdin, or ottherwise create
+    // find or create frontmatter and put the title / date in
+    // write to the file name we came up with
+    // open editor
+    // print new exercises to be created
+    // print new PRs for existing exercises
+    // ask to (e)dit, (d)elete, or (s)ave[, commit[, and push]] depending on config and presence of git
     if (options.template) {
       console.log(`Creating new workout from template ${options.template}...`);
     } else {
@@ -38,10 +47,14 @@ export class WorkoutController {
     }
   };
 
-  rm = async (fileNames: string[]) => {
+  rm = async (fileNames: string[], options: { deleteFile: boolean }) => {
     await Database.open(this.config.databaseFile, async (db) => {
       for (let i = 0; i < fileNames.length; i++) {
-        await new PersistWorkout(db).deleteWorkout(fileNames[i]);
+        const filePath = fileNames[i];
+        if (options.deleteFile && fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+        await new PersistWorkout(db).deleteWorkout(filePath);
       }
     });
   };

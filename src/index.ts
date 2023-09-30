@@ -68,10 +68,9 @@ workout
 
 workout
   .command("new")
-  // TODO
   .option("-t, --template <templateFile>", "Create from a template")
-  // TODO
   .option("-d, --date <date>", "Specify a date")
+  .option("-n, --name <name>", "Specify a title for the workout")
   .description("Create a new file and save it to the database")
   .action(route(workoutController.new));
 
@@ -82,8 +81,7 @@ workout
 
 workout
   .command("rm <fileNames...>")
-  // TODO
-  .option("-D, --delete", "Delete the file")
+  .option("-D, --delete-file", "Delete the file")
   .description("Removes a workout from the database")
   .action(route(workoutController.rm));
 
