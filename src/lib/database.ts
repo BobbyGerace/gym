@@ -15,9 +15,7 @@ export class Database {
 
   static async open<T>(
     databaseFile: string,
-    fn: (db: Database) => Promise<T>,
-    onNotExists: (file: string) => Promise<void> = dbNotExistsError,
-    onWrongVersion: () => Promise<void> = wrongVersionError
+    fn: (db: Database) => Promise<T>
   ): Promise<T> {
     if (Database.connections[databaseFile]) {
       return fn(new Database(Database.connections[databaseFile]));
@@ -25,14 +23,14 @@ export class Database {
 
     const isMemory = databaseFile === ":memory:";
     if (!isMemory && !fileExists(databaseFile)) {
-      await onNotExists(databaseFile);
+      dbNotExistsError(databaseFile);
     }
 
     const sqliteDb = await openDatabase(databaseFile);
     const instance = new Database(sqliteDb);
 
     if (!isMemory && !(await instance.dbIsCurrentVersion())) {
-      await onWrongVersion();
+      wrongVersionError();
     }
 
     try {

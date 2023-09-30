@@ -5,6 +5,7 @@ import fs from "fs";
 import { yNPrompt } from "../lib/prompt";
 import { PersistWorkout } from "../lib/persistWorkout";
 import { parseWorkout } from "../lib/parser";
+import { findChangedFiles } from "../lib/findChangedFiles";
 
 const asyncNoop = () => Promise.resolve();
 
@@ -35,62 +36,35 @@ export class DbController {
       );
     } else {
       await Database.initializeDatabase(this.config.databaseFile);
-      console.log("Database Initialized");
+      console.log("Database Initialized.");
     }
   };
 
   sync = async (options: { yes: boolean }): Promise<boolean> => {
     return await Database.open(this.config.databaseFile, async (db) => {
-      const workoutPath = path.join(process.cwd(), this.config.workoutDir);
-      const files = fs
-        .readdirSync(workoutPath)
-        .filter((d) => d.match(/^\d{4}-\d{2}-\d{2}.*\.gym$/));
+      const { created, updated, deleted } = await findChangedFiles(
+        this.config,
+        db
+      );
 
-      const lastDbUpdateByFileName = (
-        await db.query<{ file_name: string; updated_at: string }>(
-          "select file_name, updated_at from workout;"
-        )
-      ).reduce((map, row) => {
-        map.set(row.file_name, new Date(row.updated_at));
-        return map;
-      }, new Map<string, Date>());
-
-      const toCreate = [];
-      const toUpdate = [];
-      for (const file of files) {
-        const { atimeMs, mtimeMs, ctimeMs } = fs.statSync(
-          path.join(process.cwd(), this.config.workoutDir, file)
-        );
-
-        const lastFileModified = new Date(Math.max(atimeMs, mtimeMs, ctimeMs));
-        const lastDbModified = lastDbUpdateByFileName.get(file);
-
-        if (!lastDbModified) toCreate.push(file);
-        else if (lastFileModified >= lastDbModified) toUpdate.push(file);
-
-        lastDbUpdateByFileName.delete(file);
-      }
-
-      const toDelete = [...lastDbUpdateByFileName.keys()];
-
-      if (toDelete.length + toUpdate.length + toCreate.length === 0) {
+      if (deleted.length + updated.length + created.length === 0) {
         console.log("Already up to date.");
         return true;
       }
 
       console.log("The following changes will be made:");
-      console.log(`  ${toCreate.length} files created`);
-      console.log(`  ${toUpdate.length} files updated`);
-      console.log(`  ${toDelete.length} files deleted`);
+      console.log(`  ${created.length} files created`);
+      console.log(`  ${updated.length} files updated`);
+      console.log(`  ${deleted.length} files deleted`);
 
       const confirmed = options.yes || (await yNPrompt("Continue?"));
       if (!confirmed) return false;
 
       const persist = new PersistWorkout(db);
-      for (const file of toDelete) {
+      for (const file of deleted) {
         await persist.deleteWorkout(file);
       }
-      for (const file of toUpdate.concat(toCreate)) {
+      for (const file of updated.concat(created)) {
         try {
           const fileName = path.join(
             process.cwd(),

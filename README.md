@@ -8,7 +8,3 @@
 4. `npm install -g .`
 
 ## TODO
-
-- Check exercise sequence/subsequence for validity
-- Consider transactions
-- Add the health check stuff
