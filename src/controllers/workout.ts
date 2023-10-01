@@ -4,7 +4,9 @@ import { parseWorkout } from "../lib/parser";
 import { PersistWorkout } from "../lib/persistWorkout";
 import { yNPrompt } from "../lib/prompt";
 import { spawn } from "child_process";
+import { formatDate } from "../lib/util";
 import fs from "fs";
+import path from "path";
 
 export class WorkoutController {
   private config: Config;
@@ -30,21 +32,23 @@ export class WorkoutController {
   };
 
   // TODO: this should be able to read from stdin
-  new = (options: { template: string; date: string }) => {
-    // create name from date or current date
-    // append something if the file already exists
-    // read file if template, or read from stdin, or ottherwise create
-    // find or create frontmatter and put the title / date in
-    // write to the file name we came up with
-    // open editor
-    // print new exercises to be created
-    // print new PRs for existing exercises
-    // ask to (e)dit, (d)elete, or (s)ave[, commit[, and push]] depending on config and presence of git
-    if (options.template) {
-      console.log(`Creating new workout from template ${options.template}...`);
-    } else {
-      console.log("Creating new workout...");
-    }
+  new = async (
+    options: { template: string; date: string; name: string },
+    stdin: string
+  ) => {
+    // Make sure the database is healthy
+    await Database.open(this.config.databaseFile, () => Promise.resolve());
+    const { template, date, name } = options;
+    const workoutDate = date ?? dateToYMD(new Date());
+    const fileName = this.fileNameFromDateAndTitle(workoutDate, name);
+
+    let fileContents = template ? getFileFromTemplate(template) : stdin;
+
+    fileContents = setFrontMatter(fileContents, date, name);
+    return console.log(fileName, fileContents);
+    fs.writeFileSync(this.workoutPath(fileName), fileContents);
+
+    return await this.edit(fileName);
   };
 
   rm = async (fileNames: string[], options: { deleteFile: boolean }) => {
@@ -60,6 +64,7 @@ export class WorkoutController {
   };
 
   edit = async (fileName: string) => {
+    // TODO: check unsynced files and prompt
     await Database.open(this.config.databaseFile, () => Promise.resolve());
     this.openInEditor(fileName);
   };
@@ -86,11 +91,88 @@ export class WorkoutController {
     });
   }
 
+  private workoutPath(fileName = "") {
+    return path.join(process.cwd(), this.config.workoutDir, fileName);
+  }
+
   private async afterSaveFlow(fileName: string) {
+    // Check for errors
+    // print new exercises to be created
+    // print new PRs for existing exercises
+    // ask to (e)dit, (d)elete, or (s)ave[, commit[, and push]] depending on config and presence of git
     const save = await yNPrompt("Save to database?");
     if (save) {
       await this.save([fileName]);
       console.log(`Saved ${fileName} to database.`);
     }
   }
+
+  // Formats the filename and handles duplicates
+  private fileNameFromDateAndTitle(date: string, title = "") {
+    if (!date.match(/^(\d{4})-(\d{2})-(\d{2})$/))
+      throw new Error("Expected date in YYYY-MM-DD format, but got " + date);
+
+    let parts = [date];
+    if (title) {
+      // TODO: Should probably truncate this if it gets too long
+      let normalizedTitle = title
+        .replace(/[\W_]/g, " ")
+        .trim()
+        .replace(/\s+/g, "-")
+        .toLowerCase();
+      parts.push(normalizedTitle);
+    }
+
+    let fileName = parts.join("-") + ".gym";
+
+    let dedupNum = 1;
+    while (fs.existsSync(this.workoutPath(fileName))) {
+      fileName = [...parts, dedupNum++].join("-") + ".gym";
+    }
+
+    return fileName;
+  }
 }
+
+const leftPad02 = (str: string): string =>
+  str.length >= 2 ? str : leftPad02(0 + str);
+
+const dateToYMD = (date: Date) => {
+  return `${date.getFullYear()}-${leftPad02(
+    (date.getMonth() + 1).toString()
+  )}-${date.getDate()}`;
+};
+
+const getFileFromTemplate = (templatePath: string): string => {
+  return fs.readFileSync(templatePath, "utf-8");
+};
+
+const setFrontMatter = (fileContents: string, date: string, title?: string) => {
+  const titleLine = title ? `title: ${title}\n` : "";
+  const dateLine = `date: ${formatDate(date)}\n`;
+  let result = fileContents;
+
+  // Delete the lines if they already exist, so we can re-add them without dups
+  result = fileContents.replace(/^\s*date\s*:.*$/gm, "");
+  if (title) {
+    result = fileContents.replace(/^\s*title\s*:.*$/gm, "");
+  }
+
+  return insertIntoFrontMatter(result, titleLine + dateLine);
+};
+
+// Assumes the lines end with \n
+const insertIntoFrontMatter = (fileContents: string, lines: string) => {
+  const delimiterMatcher = fileContents.matchAll(/^\s*---/gm);
+  delimiterMatcher.next();
+  const match = delimiterMatcher.next();
+  if (match.value) {
+    return (
+      fileContents.slice(0, match.value.index) +
+      lines +
+      fileContents.slice(match.value.index + 1)
+    );
+  }
+
+  return "---\n" + lines + "---\n\n";
+};

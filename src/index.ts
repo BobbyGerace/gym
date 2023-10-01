@@ -25,6 +25,8 @@ function route<T extends (...args: any) => any>(
   }) as any;
 }
 
+let stdin = "";
+
 const exerciseController = new ExerciseController(config);
 exercise
   .command("list")
@@ -69,10 +71,10 @@ workout
 workout
   .command("new")
   .option("-t, --template <templateFile>", "Create from a template")
-  .option("-d, --date <date>", "Specify a date")
+  .option("-d, --date <date>", "Specify a date (YYYY-MM-DD)")
   .option("-n, --name <name>", "Specify a title for the workout")
   .description("Create a new file and save it to the database")
-  .action(route(workoutController.new));
+  .action((options) => route(workoutController.new)(options, stdin));
 
 workout
   .command("edit <fileName>")
@@ -90,7 +92,19 @@ workout
   .description("Tries to parse a file and outputs JSON")
   .action(route(workoutController.parse));
 
-program.parse(process.argv);
+if (process.stdin.isTTY) {
+  program.parse(process.argv);
+} else {
+  process.stdin.on("readable", function () {
+    var chunk = process.stdin.read();
+    if (chunk !== null) {
+      stdin += chunk;
+    }
+  });
+  process.stdin.on("end", function () {
+    program.parse(process.argv);
+  });
+}
 
 // If no arguments, display help
 if (!process.argv.slice(2).length) {
