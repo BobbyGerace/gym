@@ -7,6 +7,8 @@ import { spawn } from "child_process";
 import { formatDate } from "../lib/util";
 import fs from "fs";
 import path from "path";
+import { DbController } from "./db";
+import { changedFilesPrompt } from "../lib/findChangedFiles";
 
 export class WorkoutController {
   private config: Config;
@@ -37,18 +39,22 @@ export class WorkoutController {
     stdin: string
   ) => {
     // Make sure the database is healthy
-    await Database.open(this.config.databaseFile, () => Promise.resolve());
-    const { template, date, name } = options;
-    const workoutDate = date ?? dateToYMD(new Date());
-    const fileName = this.fileNameFromDateAndTitle(workoutDate, name);
+    await Database.open(this.config.databaseFile, async (db) => {
+      if (await changedFilesPrompt(this.config, db)) {
+        await new DbController(this.config).sync({ yes: true });
+      }
+      const { template, date, name } = options;
+      const workoutDate = date ?? dateToYMD(new Date());
+      const fileName = this.fileNameFromDateAndTitle(workoutDate, name);
 
-    let fileContents = template ? getFileFromTemplate(template) : stdin;
+      let fileContents = template ? getFileFromTemplate(template) : stdin;
 
-    fileContents = setFrontMatter(fileContents, date, name);
-    return console.log(fileName, fileContents);
-    fs.writeFileSync(this.workoutPath(fileName), fileContents);
+      fileContents = setFrontMatter(fileContents, date, name);
+      return console.log(fileName, fileContents);
+      fs.writeFileSync(this.workoutPath(fileName), fileContents);
 
-    return await this.edit(fileName);
+      return await this.edit(fileName);
+    });
   };
 
   rm = async (fileNames: string[], options: { deleteFile: boolean }) => {
@@ -174,5 +180,5 @@ const insertIntoFrontMatter = (fileContents: string, lines: string) => {
     );
   }
 
-  return "---\n" + lines + "---\n\n";
+  return "---\n" + lines + "---\n\n" + fileContents;
 };

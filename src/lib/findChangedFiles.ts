@@ -2,6 +2,7 @@ import { Database } from "./database";
 import { Config } from "./config";
 import path from "path";
 import fs from "fs";
+import { yNPrompt } from "./prompt";
 
 export const findChangedFiles = async (
   config: Config,
@@ -39,4 +40,18 @@ export const findChangedFiles = async (
   const deleted = [...lastDbUpdateByFileName.keys()];
 
   return { created, updated, deleted };
+};
+
+export const changedFilesPrompt = async (
+  config: Config,
+  db: Database
+): Promise<boolean> => {
+  const { updated, deleted, created } = await findChangedFiles(config, db);
+  if (created.length + updated.length + deleted.length === 0) return false;
+
+  console.log("The following unsaved changes were found");
+  console.log(`  ${created} files created`);
+  console.log(`  ${updated} files updated`);
+  console.log(`  ${deleted} files deleted`);
+  return await yNPrompt("Would you like to sync these files now?");
 };
