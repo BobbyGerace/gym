@@ -28,7 +28,7 @@ export const parseFrontMatterKey = (state: ParserState) => {
 
 export const parseFrontMatterValue = (state: ParserState): string => {
   if (state.char() === '"') return parseString(state);
-  return takeWhile(state, (char) => !"\n#".includes(char));
+  return takeWhile(state, (char) => char !== "\n" && state.peek(2) !== "//");
 };
 
 export const parseFrontMatterPair = (state: ParserState): [string, string] => {

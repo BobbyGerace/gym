@@ -12,7 +12,7 @@ const workouts = `315x10,8,6
 500x1
 455x1`
   .split("\n")
-  .map((set) => `1) Deadlift\n${set}`);
+  .map((set) => `# Deadlift\n${set}`);
 
 test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
   await Database.initializeDatabase(":memory:", async (db) => {

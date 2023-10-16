@@ -9,6 +9,8 @@
   "scripts": {
     "test": "jest ./src",
     "test:watch": "jest --watch ./src",
+    "test:single": "jest --watchAll=false ",
+    "types": "tsc --noEmit",
     "build": "tsc --outDir build && pkg ./build/index.js -o ./bin/gym",
     "dev": "tsc --outDir build --watch"
   },

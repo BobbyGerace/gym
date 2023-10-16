@@ -6,15 +6,15 @@ title: Hello world
 date: 2020-01-01
 ---
 
-1) Bench Press
-# Felt good today
+# Bench Press
+// Felt good today
 225x10@9
 200x10,10,10
 
-2a) Lat Pulldown
+# Lat Pulldown
 100x10,10,10
 
-2b) Dumbbell Bench Press
+& Dumbbell Bench Press
 50x10,10,10
  `);
 test("parseDocument should parse document", () => {
@@ -26,8 +26,8 @@ test("parseDocument should parse document", () => {
     exercises: [
       {
         name: "Bench Press",
-        sequence: 1,
-        subsequence: null,
+        sequence: 0,
+        subsequence: 0,
         lineStart: 6,
         lineEnd: 10,
         sets: [
@@ -44,8 +44,8 @@ test("parseDocument should parse document", () => {
       },
       {
         name: "Lat Pulldown",
-        sequence: 2,
-        subsequence: "a",
+        sequence: 1,
+        subsequence: 0,
         lineStart: 11,
         lineEnd: 13,
         sets: [
@@ -57,8 +57,8 @@ test("parseDocument should parse document", () => {
       },
       {
         name: "Dumbbell Bench Press",
-        sequence: 2,
-        subsequence: "b",
+        sequence: 1,
+        subsequence: 1,
         lineStart: 14,
         lineEnd: 16,
         sets: [
@@ -73,15 +73,15 @@ test("parseDocument should parse document", () => {
 });
 
 const withoutFrontMatter = newState(`
-1) Bench Press
-# Felt good today
+# Bench Press
+// Felt good today
 225x10@9
 200x10,10,10
 
-2a) Lat Pulldown
+# Lat Pulldown
 100x10,10,10
 
-2b) Dumbbell Bench Press
+& Dumbbell Bench Press
 50x10,10,10
 `);
 test("parseDocument should parse document without frontmatter", () => {
@@ -90,8 +90,8 @@ test("parseDocument should parse document without frontmatter", () => {
     exercises: [
       {
         name: "Bench Press",
-        sequence: 1,
-        subsequence: null,
+        sequence: 0,
+        subsequence: 0,
         lineStart: 2,
         lineEnd: 6,
         sets: [
@@ -108,8 +108,8 @@ test("parseDocument should parse document without frontmatter", () => {
       },
       {
         name: "Lat Pulldown",
-        sequence: 2,
-        subsequence: "a",
+        sequence: 1,
+        subsequence: 0,
         lineStart: 7,
         lineEnd: 9,
         sets: [
@@ -121,8 +121,8 @@ test("parseDocument should parse document without frontmatter", () => {
       },
       {
         name: "Dumbbell Bench Press",
-        sequence: 2,
-        subsequence: "b",
+        sequence: 1,
+        subsequence: 1,
         lineStart: 10,
         lineEnd: 12,
         sets: [
@@ -160,30 +160,30 @@ test("parseDocument should parse empty document", () => {
 });
 
 const withCommentsAndWhitespace = newState(`
-# hello
---- # is anybody out there?
+// hello
+--- // is anybody out there?
 title: Hello world
  
-# comments can go anywhere
+// comments can go anywhere
 
 date: 2020-01-01
 ---
 
-  # they can go here too
+  // they can go here too
 
-1) Bench Press
-# Felt good today
+# Bench Press
+// Felt good today
 225x10@9
 200x10,10,10
 
-2a) Lat Pulldown
+# Lat Pulldown
 
-100x10,10,10 # comments on the sets!
+100x10,10,10 // comments on the sets!
 
-2b) Dumbbell Bench Press
+& Dumbbell Bench Press
 50x10,10,10
-#
-# even at the end!
+//
+// even at the end!
  `);
 test("parseDocument should parse with comments and empty lines", () => {
   expect(parseDocument(withCommentsAndWhitespace)).toEqual({
@@ -194,8 +194,8 @@ test("parseDocument should parse with comments and empty lines", () => {
     exercises: [
       {
         name: "Bench Press",
-        sequence: 1,
-        subsequence: null,
+        sequence: 0,
+        subsequence: 0,
         lineStart: 13,
         lineEnd: 17,
         sets: [
@@ -212,8 +212,8 @@ test("parseDocument should parse with comments and empty lines", () => {
       },
       {
         name: "Lat Pulldown",
-        sequence: 2,
-        subsequence: "a",
+        sequence: 1,
+        subsequence: 0,
         lineStart: 18,
         lineEnd: 21,
         sets: [
@@ -225,8 +225,8 @@ test("parseDocument should parse with comments and empty lines", () => {
       },
       {
         name: "Dumbbell Bench Press",
-        sequence: 2,
-        subsequence: "b",
+        sequence: 1,
+        subsequence: 1,
         lineStart: 22,
         lineEnd: 26,
         sets: [

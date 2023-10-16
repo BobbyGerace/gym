@@ -38,7 +38,7 @@ export type Tag = { key: string; value?: string | number };
 export type Exercise = {
   name: string;
   sequence: number;
-  subsequence: string | null;
+  subsequence: number;
   sets: Set[];
   lineStart: number;
   lineEnd: number;

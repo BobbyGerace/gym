@@ -28,7 +28,7 @@ export const whitespace = (state: ParserState): string =>
   takeWhile(state, (char) => /[ \t]/.test(char));
 
 export const comment = (state: ParserState): string => {
-  if (state.input[state.pos] === "#") {
+  if (state.input.slice(state.pos, state.pos + 2) === "//") {
     return takeUntil(state, (char) => char === "\n");
   }
   return "";

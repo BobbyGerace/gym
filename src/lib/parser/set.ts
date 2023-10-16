@@ -176,7 +176,7 @@ export const parseSet = (state: ParserState): Set => {
         rollback();
         setSet("weight", parseWeight(state));
       }
-    } else if (/[#\n]/.test(char)) {
+    } else if (state.peek() === "\n" || state.peek(2) === "//") {
       break;
     } else {
       error(state, `Expected set property but found ${char}`);

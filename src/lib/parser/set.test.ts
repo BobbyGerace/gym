@@ -2,7 +2,7 @@ import { newState } from "./parserState";
 const { parseSet } = require("./set");
 
 const set = newState(
-  `100x2,3,4,5 @10 1:30:00 100m {chains: 123, another} # comment`
+  `100x2,3,4,5 @10 1:30:00 100m {chains: 123, another} // comment`
 );
 
 test("parseSet should parse set", () => {
@@ -80,7 +80,7 @@ test("parseSet should parse short time", () => {
 });
 
 const setWithWhitespace = newState(
-  `100 x 2 , 3 , 4 , 5 @ 10 1 : 30 : 00 100 m { chains : 123 , another } # comment`
+  `100 x 2 , 3 , 4 , 5 @ 10 1 : 30 : 00 100 m { chains : 123 , another } // comment`
 );
 
 test("parseSet should parse set with whitespace", () => {

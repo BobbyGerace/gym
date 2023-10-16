@@ -1,7 +1,15 @@
 export const newState = (input: string): ParserState => new ParserState(input);
 
+type ParseError = {
+  message: string;
+  line: number;
+  col: number;
+  length: number;
+};
+
 export class ParserState {
   input: string;
+  errors: ParseError[] = [];
   private _pos: number;
   private _line: number;
   private _col: number;
@@ -23,6 +31,10 @@ export class ParserState {
 
   get col(): number {
     return this._col;
+  }
+
+  peek(n = 1): string {
+    return this.input.slice(this.pos, this.pos + n);
   }
 
   char() {
@@ -52,5 +64,9 @@ export class ParserState {
 
   isEOF(): boolean {
     return this._pos >= this.input.length;
+  }
+
+  error(message: string, line = this.line, col = this.col, length = 1) {
+    this.errors.push({ message, line, col, length });
   }
 }

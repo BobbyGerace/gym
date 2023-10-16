@@ -1,67 +1,62 @@
 import { newState } from "./parserState";
 import { parseExercise } from "./exercise";
 
-const exercise = newState("1) Bench Press");
-test('parseExercise should parse "1) Bench Press"', () => {
+const exercise = newState("# Bench Press");
+test('parseExercise should parse "# Bench Press"', () => {
   expect(parseExercise(exercise)).toEqual({
     name: "Bench Press",
-    sequence: 1,
-    subsequence: null,
+    isSuperset: false,
     sets: [],
     lineStart: 1,
     lineEnd: 1,
   });
 });
 
-const exerciseWithSubsequence = newState("1a) Bench Press");
-test('parseExercise should parse "1a) Bench Press"', () => {
+const exerciseWithSubsequence = newState("& Bench Press");
+test('parseExercise should parse "& Bench Press"', () => {
   expect(parseExercise(exerciseWithSubsequence)).toEqual({
     name: "Bench Press",
-    sequence: 1,
-    subsequence: "a",
+    isSuperset: true,
     sets: [],
     lineStart: 1,
     lineEnd: 1,
   });
 });
 
-const exerciseWithSubsequenceAndWhitespace = newState(" 1 a ) Bench Press ");
-test('parseExercise should parse " 1a ) Bench Press "', () => {
+const exerciseWithSubsequenceAndWhitespace = newState(" # Bench Press ");
+test('parseExercise should parse " # Bench Press "', () => {
   expect(parseExercise(exerciseWithSubsequenceAndWhitespace)).toEqual({
     name: "Bench Press",
-    sequence: 1,
-    subsequence: "a",
+    isSuperset: false,
     sets: [],
     lineStart: 1,
     lineEnd: 1,
   });
 });
 
-const exerciseWithComment = newState("3b) Bench Press # comment");
-test('parseExercise should parse "3b) Bench Press # comment"', () => {
+const exerciseWithComment = newState("# Bench Press // comment");
+test('parseExercise should parse "# Bench Press // comment"', () => {
   expect(parseExercise(exerciseWithComment)).toEqual({
     name: "Bench Press",
-    sequence: 3,
-    subsequence: "b",
+    isSuperset: false,
     sets: [],
     lineStart: 1,
     lineEnd: 1,
   });
 });
 
-const exerciseWithSpecialCharacters = newState("3b) 23 Bench-Press (Dumbbell)");
-test('parseExercise should parse "3b) 23 Bench-Press (Dumbbell)"', () => {
+const exerciseWithSpecialCharacters = newState("# 23 Bench-Press (Dumbbell)");
+test('parseExercise should parse "# 23 Bench-Press (Dumbbell)"', () => {
   expect(parseExercise(exerciseWithSpecialCharacters)).toEqual({
     name: "23 Bench-Press (Dumbbell)",
-    sequence: 3,
-    subsequence: "b",
+    isSuperset: false,
     sets: [],
     lineStart: 1,
     lineEnd: 1,
   });
 });
 
-const exerciseWithSets = newState(`1) Bench Press
+const exerciseWithSets = newState(`# Bench Press
 100x2,3,4,5
 300x4,5,6
 34ft
@@ -69,8 +64,7 @@ bw x 5 @ 1`);
 test("parseExercise should parse sets", () => {
   expect(parseExercise(exerciseWithSets)).toEqual({
     name: "Bench Press",
-    sequence: 1,
-    subsequence: null,
+    isSuperset: false,
     lineStart: 1,
     lineEnd: 5,
     sets: [
@@ -94,22 +88,21 @@ test("parseExercise should parse sets", () => {
   });
 });
 
-const exerciseWithSetsAndComments = newState(`1) Bench Press #here
-# and here
-100x2,3,4,5 #and here
+const exerciseWithSetsAndComments = newState(`# Bench Press //here
+// and here
+100x2,3,4,5 // and here
 300x4,5,6
 
-# and here
+// and here
 
 34ft
 bw x 5 @ 1
-# and here
-2) Hello world`);
+// and here
+# Hello world`);
 test("parseExercise should parse sets with comments", () => {
   expect(parseExercise(exerciseWithSetsAndComments)).toEqual({
     name: "Bench Press",
-    sequence: 1,
-    subsequence: null,
+    isSuperset: false,
     lineStart: 1,
     lineEnd: 10,
     sets: [
@@ -137,22 +130,14 @@ test("parseExercise should parse sets with comments", () => {
 // but right now it's too hard to get the autocomplete/new exercise check to work
 // correctly
 // const exerciseWithString = newState(
-//   '1) "All kinds of \\n illegal {characters!}" '
+//   '# "All kinds of \\n illegal {characters!}" '
 // );
 // test('parseExercise should parse string names"', () => {
 //   expect(parseExercise(exerciseWithString)).toEqual({
 //     name: "All kinds of \n illegal {characters!}",
-//     sequence: 1,
-//     subsequence: null,
+//     isSuperset: false,
 //     sets: [],
 //     lineStart: 1,
 //     lineEnd: 1,
 //   });
 // });
-
-const exerciseWithIllegalChars = newState(
-  "1) All kinds of \n illegal {characters!}"
-);
-test("parseExercise should not parse illegal characters", () => {
-  expect(() => parseExercise(exerciseWithIllegalChars)).toThrow();
-});

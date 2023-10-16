@@ -77,7 +77,7 @@ export class Database {
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               exercise_id INTEGER,
               sequence INTEGER NOT NULL,
-              subsequence TEXT,
+              subsequence INTEGER NOT NULL,
               line_start INTEGER NOT NULL,
               line_end INTEGER NOT NULL,
               workout_id INTEGER,

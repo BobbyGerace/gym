@@ -7,10 +7,10 @@ const workout1 = `
   hello: world
   ---
 
-  1) Deadlift
+  # Deadlift
   500x1@9
 
-  2) Barbell Row
+  # Barbell Row
   225x5,5,5 3 sets
 `;
 
@@ -19,13 +19,13 @@ const workout2 = `
   hello: world
   ---
 
-  1) deadlift
+  # deadlift
   500x1@9
 
-  2) Front Squat
+  # Front Squat
   300x5,6,7,8
 
-  3) Barbell Row
+  # Barbell Row
   135x12,12,12
 `;
 

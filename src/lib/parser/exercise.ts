@@ -11,14 +11,18 @@ import {
 import { parseSet } from "./set";
 import { Exercise, Set } from "./ast";
 
-const parseSequence = (state: ParserState): number => {
-  const sequence = takeWhile(state, (char) => /[0-9]/.test(char));
-  return parseInt(sequence);
+type InternalExercise = Omit<Exercise, "sequence" | "subsequence"> & {
+  isSuperset: boolean;
 };
 
-const parseSubsequence = (state: ParserState): string | null => {
-  const subsequence = takeWhile(state, (char) => /[a-z]/.test(char));
-  return subsequence || null;
+const parseExStart = (state: ParserState): string => {
+  const char = state.char();
+  if (char !== "&" && char !== "#") {
+    state.error(`Expected & or # but got ${char}`);
+  }
+
+  state.inc();
+  return char;
 };
 
 const parseName = (state: ParserState): string => {
@@ -27,19 +31,17 @@ const parseName = (state: ParserState): string => {
   // correctly
   // if (state.char() === '"') return parseString(state);
 
-  const name = takeWhile(state, (char) => /[^#\n{}]/.test(char));
+  const name = takeWhile(
+    state,
+    (char) => char !== "\n" && state.peek(2) !== "//"
+  );
   return name.trim();
 };
 
-export const parseExercise = (state: ParserState): Exercise => {
+export const parseExercise = (state: ParserState): InternalExercise => {
   const lineStart = state.line;
   whitespace(state);
-  const sequence = parseSequence(state);
-  whitespace(state);
-  const subsequence = parseSubsequence(state);
-  whitespace(state);
-  expect(state, ")");
-  state.inc();
+  const isSuperset = parseExStart(state) === "&";
   whitespace(state);
   const name = parseName(state);
   whitespace(state);
@@ -67,8 +69,7 @@ export const parseExercise = (state: ParserState): Exercise => {
 
   return {
     name,
-    sequence,
-    subsequence,
+    isSuperset,
     sets,
     lineStart,
     lineEnd,
@@ -76,14 +77,9 @@ export const parseExercise = (state: ParserState): Exercise => {
 };
 
 const isNewExercise = (state: ParserState): boolean => {
-  let isExercise = false;
   const rollback = state.save();
   whitespace(state);
-  parseSequence(state);
-  whitespace(state);
-  parseSubsequence(state);
-  whitespace(state);
-  isExercise = state.input[state.pos] === ")";
+  const isExercise = state.char() === "&" || state.char() === "#";
   rollback();
   return isExercise;
 };
