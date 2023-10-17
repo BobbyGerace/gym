@@ -16,9 +16,10 @@ type InternalExercise = Omit<Exercise, "sequence" | "subsequence"> & {
 };
 
 const parseExStart = (state: ParserState): string => {
-  const char = state.char();
+  let char = state.char();
   if (char !== "&" && char !== "#") {
     state.error(`Expected & or # but got ${char}`);
+    char = "#";
   }
 
   state.inc();

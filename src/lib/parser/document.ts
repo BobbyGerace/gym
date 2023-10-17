@@ -14,9 +14,10 @@ export const parseDocument = (state: ParserState): Workout => {
   let subsequence = 0;
   while (!state.isEOF()) {
     const { line, col } = state;
-    const { isSuperset, ...exercise } = parseExercise(state);
+    let { isSuperset, ...exercise } = parseExercise(state);
     if (isSuperset && exercises.length === 0) {
       state.error("First exercise cannot be a superset", line, col);
+      isSuperset = false;
     }
 
     if (!isSuperset) {

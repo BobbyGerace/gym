@@ -142,6 +142,12 @@ test("parseSet should parse all permutations", () => {
   }
 });
 
-test("parseSet should throw if it encounters an invalid term", () => {
-  expect(() => parseSet(newState("100x3,4,5 potato"))).toThrow();
+const setWithQuotedTags = newState(`{one: "a", "two": b}`);
+test("parseSet should parse quoted tags", () => {
+  expect(parseSet(setWithQuotedTags)).toEqual({
+    tags: [
+      { key: "one", value: "a" },
+      { key: "two", value: "b" },
+    ],
+  });
 });

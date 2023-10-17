@@ -41,10 +41,10 @@ export const newLine = (state: ParserState): string => {
   return state.input.slice(start, state.pos);
 };
 
-export const parseIdentifier = (state: ParserState): string => {
+export const parseIdentifier = (state: ParserState): string | null => {
   // Only allow identifiers to start with letters and underscore
   if (!/^[a-zA-Z_]$/.test(state.char())) {
-    error(state, `Expected identifier but got ${state.char()}`);
+    return null;
   }
   const key = takeWhile(state, (char) => /[a-zA-Z0-9_-]/.test(char));
   return key;

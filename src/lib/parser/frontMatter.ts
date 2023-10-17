@@ -22,8 +22,23 @@ export const parseFrontMatterDelimiter = (state: ParserState): boolean => {
   return true;
 };
 
-export const parseFrontMatterKey = (state: ParserState) => {
-  return state.char() === '"' ? parseString(state) : parseIdentifier(state);
+export const parseFrontMatterKey = (state: ParserState): string => {
+  return state.char() === '"' ? parseString(state) : getIdentifierOrSkip(state);
+};
+
+const getIdentifierOrSkip = (state: ParserState): string => {
+  const { line, col } = state;
+  let identifier = parseIdentifier(state);
+  if (identifier === null) {
+    identifier = takeWhile(state, (char) => !"\n:".includes(char));
+    state.error(
+      `Expected identifier, got ${state.input[state.pos]}`,
+      line,
+      col,
+      length
+    );
+  }
+  return identifier;
 };
 
 export const parseFrontMatterValue = (state: ParserState): string => {

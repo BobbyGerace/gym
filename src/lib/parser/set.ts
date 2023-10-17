@@ -1,5 +1,11 @@
 import { ParserState } from "./parserState";
-import { takeWhile, whitespace, expect, error, parseIdentifier } from "./util";
+import {
+  takeWhile,
+  whitespace,
+  expect,
+  parseIdentifier,
+  parseString,
+} from "./util";
 import {
   Set,
   Tag,
@@ -14,6 +20,7 @@ import {
 const unitStartRegex = new RegExp(`^[${allUnits.map((u) => u[0])}]$`, "i");
 
 const parseNumber = (state: ParserState): number => {
+  const { line, col } = state;
   let num = "";
   if (state.input[state.pos] === "-") {
     state.inc();
@@ -29,7 +36,7 @@ const parseNumber = (state: ParserState): number => {
   const result = parseFloat(num);
 
   if (isNaN(result)) {
-    error(state, `Expected number, got ${state.char()}`);
+    state.error(`Invalid number ${num}`, line, col, num.length);
   }
   return result;
 };
@@ -61,9 +68,10 @@ const parseWithUnit = (
 ): ValueWithUnit<typeof allUnits[number]> => {
   const value = parseNumber(state);
   whitespace(state);
+  const { line, col } = state;
   const unit = takeWhile(state, (char) => /[a-zA-Z]/.test(char)).toLowerCase();
   if (!allUnits.includes(unit as any)) {
-    error(state, `Expected unit, got ${unit}`);
+    state.error(`Expected unit, got ${unit}`, line, col, unit.length);
   }
   return { value, unit: unit as typeof allUnits[number] };
 };
@@ -85,8 +93,10 @@ const parseTime = (state: ParserState): Time => {
 };
 
 const parseBodyweight = (state: ParserState): "bw" => {
-  if (state.input.slice(state.pos, state.pos + 2).toLowerCase() !== "bw") {
-    error(state, `Expected bw, got ${state.input[state.pos]}`);
+  const { line, col } = state;
+  const nextTwo = state.peek(2);
+  if (nextTwo.toLowerCase() !== "bw") {
+    state.error(`Expected bw, got ${nextTwo}`, line, col, 2);
   }
   state.inc(2);
   return "bw";
@@ -98,29 +108,60 @@ const parseTag = (state: ParserState): Tag[] => {
   expect(state, "{");
 
   const tags = [];
-  whitespace(state);
   do {
     whitespace(state);
-    const key = parseIdentifier(state);
+    const key = parseTagKey(state);
     whitespace(state);
     if (state.input[state.pos] === ":") {
       state.inc();
       whitespace(state);
-      const value = /^[\d-.]$/.test(state.input[state.pos])
-        ? parseNumber(state)
-        : parseIdentifier(state);
+      const value = parseTagValue(state);
       tags.push({ key, value });
-      whitespace(state);
     } else {
       tags.push({ key });
     }
+    whitespace(state);
   } while (parseComma(state));
 
   if (state.input[state.pos] !== "}") {
-    error(state, `Expected , or }, got ${state.input[state.pos]}`);
+    state.error(`Expected , or }, got ${state.input[state.pos]}`);
+    takeWhile(state, (char) => char !== "}" && char !== "\n");
   }
   state.inc();
   return tags;
+};
+
+const parseTagKey = (state: ParserState): string => {
+  if (state.input[state.pos] === '"') {
+    return parseString(state);
+  }
+  return getIdentifierOrSkip(state);
+};
+
+const parseTagValue = (state: ParserState): string | number => {
+  if (/^[\d-.]$/.test(state.input[state.pos])) {
+    return parseNumber(state);
+  }
+  if (state.input[state.pos] === '"') {
+    return parseString(state);
+  }
+  return getIdentifierOrSkip(state);
+};
+
+// Try to parse an identifier, if it fails, skip to the next part of the tag
+const getIdentifierOrSkip = (state: ParserState): string => {
+  const { line, col } = state;
+  let identifier = parseIdentifier(state);
+  if (identifier === null) {
+    identifier = takeWhile(state, (char) => !"\n:,}".includes(char));
+    state.error(
+      `Expected identifier, got ${state.input[state.pos]}`,
+      line,
+      col,
+      length
+    );
+  }
+  return identifier;
 };
 
 const parseComma = (state: ParserState): boolean => {
@@ -133,15 +174,16 @@ const parseComma = (state: ParserState): boolean => {
 
 export const parseSet = (state: ParserState): Set => {
   const set: Set = {};
-  const setSet = <K extends keyof Set>(key: K, value: Set[K]) => {
-    if (set[key] !== undefined) {
-      error(state, `Duplicate ${key}`);
-    }
-    set[key] = value;
-  };
 
   whitespace(state);
   while (!state.isEOF() && state.char() !== "\n") {
+    const { line, col } = state;
+    const setSet = <K extends keyof Set>(key: K, value: Set[K]) => {
+      if (set[key] !== undefined) {
+        state.error(`Duplicate ${key}`, line, col, state.col - col);
+      }
+      set[key] = value;
+    };
     const char = state.input[state.pos];
     if (char === "x") setSet("reps", parseReps(state));
     else if (char === "@") setSet("rpe", parseRpe(state));
@@ -151,10 +193,7 @@ export const parseSet = (state: ParserState): Set => {
       setSet("tags", parseTag(state));
     } else if (/^[0-9.-]$/.test(char)) {
       const rollback = state.save();
-      if (isNaN(parseNumber(state))) {
-        error(state, `Expected number, got ${state.input[state.pos]}`);
-      }
-
+      parseNumber(state);
       whitespace(state);
       if (state.input[state.pos] === ":") {
         rollback();
@@ -170,7 +209,12 @@ export const parseSet = (state: ParserState): Set => {
           // lolol
           setSet("sets", value.value);
         } else {
-          error(state, `Expected weight or distance, got ${value.unit}`);
+          state.error(
+            `Expected weight or distance, got ${value.unit}`,
+            state.line,
+            state.col - value.unit.length,
+            value.unit.length
+          );
         }
       } else {
         rollback();
@@ -179,7 +223,7 @@ export const parseSet = (state: ParserState): Set => {
     } else if (state.peek() === "\n" || state.peek(2) === "//") {
       break;
     } else {
-      error(state, `Expected set property but found ${char}`);
+      state.error(`Expected set property but found ${char}`, line, col);
     }
     whitespace(state);
   }
