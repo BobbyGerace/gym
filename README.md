@@ -8,3 +8,6 @@
 4. `npm install -g .`
 
 ## TODO
+
+- Finish making parser resilient
+- Save lb or kg to database even when unspecified

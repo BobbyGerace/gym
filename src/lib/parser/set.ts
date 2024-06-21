@@ -153,7 +153,7 @@ const getIdentifierOrSkip = (state: ParserState): string => {
   const { line, col } = state;
   let identifier = parseIdentifier(state);
   if (identifier === null) {
-    identifier = takeWhile(state, (char) => !"\n:,}".includes(char));
+    identifier = takeWhile(state, (char) => !"\n:,} ".includes(char));
     state.error(
       `Expected identifier, got ${state.input[state.pos]}`,
       line,
@@ -224,6 +224,10 @@ export const parseSet = (state: ParserState): Set => {
       break;
     } else {
       state.error(`Expected set property but found ${char}`, line, col);
+      takeWhile(
+        state,
+        (char) => !/[\s\n]/.test(char) && state.peek(2) !== "//"
+      );
     }
     whitespace(state);
   }

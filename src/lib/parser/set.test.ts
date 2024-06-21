@@ -151,3 +151,9 @@ test("parseSet should parse quoted tags", () => {
     ],
   });
 });
+
+test("parseSet should error if it encounters an invalid term", () => {
+  const state = newState("100x3,4,5 potato");
+  parseSet(state);
+  expect(state.errors.length).toBe(1);
+});
