@@ -19,11 +19,7 @@ export abstract class AbstractTokenizer<T> {
   takeWhile(predicate: (char: string) => boolean): string {
     let result = "";
 
-    while (
-      this.parserState.pos < this.parserState.input.length &&
-      !/[\n\r]/.test(this.parserState.char()) &&
-      predicate(this.parserState.char())
-    ) {
+    while (!this.isLineEnd() && predicate(this.parserState.char())) {
       result += this.parserState.inc();
     }
     return result;
@@ -66,5 +62,16 @@ export abstract class AbstractTokenizer<T> {
     const { line, col } = this.parserState;
     const value = fn();
     return { type, value, line, col };
+  }
+
+  /**
+   * Checks if end of input or end of line is reached
+   */
+  isLineEnd(): boolean {
+    return this.parserState.isEOF() || /[\n\r]/.test(this.parserState.char());
+  }
+
+  isComment(): boolean {
+    return this.parserState.peek(2) === "//";
   }
 }

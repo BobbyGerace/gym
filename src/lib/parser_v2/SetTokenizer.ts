@@ -12,6 +12,7 @@ type SetTokenType =
   | "tagStart"
   | "unknown"
   | "newLine"
+  | "comment"
   | "eof";
 
 export class SetTokenizer extends AbstractTokenizer<SetTokenType> {
@@ -39,6 +40,11 @@ export class SetTokenizer extends AbstractTokenizer<SetTokenType> {
       return this.wrapToken("newLine", () => this.newLine());
     } else if (nextChar === "{") {
       return this.wrapToken("tagStart", () => this.parserState.inc());
+    } else if (this.isComment()) {
+      return this.wrapToken("comment", () => {
+        // takeWhile already stops at line end
+        return this.takeWhile(() => true);
+      });
     } else {
       return this.wrapToken("unknown", () => this.parserState.inc());
     }
