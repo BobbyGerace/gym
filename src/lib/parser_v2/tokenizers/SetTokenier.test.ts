@@ -1,5 +1,5 @@
 import { SetTokenizer } from "./SetTokenizer";
-import { ParserState } from "./parserState";
+import { ParserState } from "../parserState";
 
 describe("SetTokenizer", () => {
   function tokenize(input: string) {

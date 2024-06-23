@@ -44,7 +44,7 @@ export type Exercise = {
   lineEnd: number;
 };
 
-export type FrontMatter = Record<string, string | number>;
+export type FrontMatter = Record<string, string | number | boolean>;
 
 export type Workout = {
   frontMatter: FrontMatter;

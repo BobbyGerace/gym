@@ -1,4 +1,4 @@
-import { ParserState } from "./parserState";
+import { ParserState } from "../parserState";
 
 export type Token<T> = {
   type: T;
@@ -56,6 +56,25 @@ export abstract class AbstractTokenizer<T> {
     }
 
     return result;
+  }
+
+  readString(): string {
+    let chars = '"';
+
+    // skip the opening quote
+    this.parserState.inc();
+
+    chars += this.takeWhile((char) => {
+      const last = this.parserState.input[this.parserState.pos - 1];
+      return char !== '"' || last === "\\";
+    });
+
+    if (this.parserState.char() === '"') {
+      chars += '"';
+      this.parserState.inc();
+    }
+
+    return chars;
   }
 
   wrapToken(type: T, fn: () => string): Token<T> {

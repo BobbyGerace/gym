@@ -1,5 +1,5 @@
 import { TagTokenizer } from "./TagTokenizer";
-import { ParserState } from "./parserState";
+import { ParserState } from "../parserState";
 
 describe("TagTokenizer", () => {
   function tokenize(input: string) {

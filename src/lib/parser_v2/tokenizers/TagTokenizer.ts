@@ -11,6 +11,7 @@ type TagTokenType =
   | "operator"
   | "string"
   | "newLine"
+  | "comment"
   | "eof"
   | "unknown";
 
@@ -41,6 +42,11 @@ export class TagTokenizer extends AbstractTokenizer<TagTokenType> {
       });
     } else if (/[\n\r]/.test(nextChar)) {
       return this.wrapToken("newLine", () => this.newLine());
+    } else if (this.isComment()) {
+      return this.wrapToken("comment", () => {
+        // takeWhile already stops at line end
+        return this.takeWhile(() => true);
+      });
     } else if (nextChar === "{") {
       return this.wrapToken("tagStart", () => this.parserState.inc());
     } else if (nextChar === "}") {
@@ -48,24 +54,5 @@ export class TagTokenizer extends AbstractTokenizer<TagTokenType> {
     } else {
       return this.wrapToken("unknown", () => this.parserState.inc());
     }
-  }
-
-  readString(): string {
-    let chars = '"';
-
-    // skip the opening quote
-    this.parserState.inc();
-
-    chars += this.takeWhile((char) => {
-      const last = this.parserState.input[this.parserState.pos - 1];
-      return char !== '"' || last === "\\";
-    });
-
-    if (this.parserState.char() === '"') {
-      chars += '"';
-      this.parserState.inc();
-    }
-
-    return chars;
   }
 }

@@ -1,5 +1,5 @@
 import { ExerciseTokenizer } from "./ExerciseTokenizer";
-import { ParserState } from "./parserState";
+import { ParserState } from "../parserState";
 
 describe("ExerciseTokenizer", () => {
   function tokenize(input: string) {
