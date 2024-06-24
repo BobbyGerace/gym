@@ -3,9 +3,9 @@ import { AbstractTokenizer, Token } from "./AbstractTokenizer";
 // X has special meaning in the set syntax, so we exclude it from the set of letters
 const lettersWithoutX = "abcdefghijklmnopqrstuvwyzABCDEFGHIJKLMNOPQRSTUVWYZ";
 const digits = "0123456789";
-const operators = "x@:";
+const operators = "Xx@:,";
 
-type SetTokenType =
+export type SetTokenType =
   | "identifier"
   | "number"
   | "operator"
