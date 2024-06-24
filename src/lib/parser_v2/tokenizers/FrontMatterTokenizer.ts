@@ -3,6 +3,7 @@ import { AbstractTokenizer, Token } from "./AbstractTokenizer";
 const digits = "0123456789";
 
 export type FrontMatterTokenType =
+  | "delimiter"
   | "identifier"
   | "colon"
   | "string"
@@ -21,6 +22,10 @@ export class FrontMatterTokenizer extends AbstractTokenizer<FrontMatterTokenType
 
     if (this.parserState.isEOF()) {
       return this.wrapToken("eof", () => "");
+    } else if (this.parserState.peek(3) === "---") {
+      return this.wrapToken("delimiter", () => {
+        return this.takeWhile((char) => char === "-");
+      });
     } else if (/^[a-zA-Z_]$/.test(nextChar)) {
       return this.wrapToken("identifier", () => {
         return this.takeWhile((char) => /[a-zA-Z0-9_-]/.test(char));

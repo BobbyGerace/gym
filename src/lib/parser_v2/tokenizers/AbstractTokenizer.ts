@@ -16,6 +16,25 @@ export abstract class AbstractTokenizer<T> {
     this.parserState = parserState;
   }
 
+  peek(n: number): Token<T>[];
+  peek(): Token<T>;
+  peek(n?: number): Token<T> | Token<T>[] {
+    const revert = this.parserState.save();
+
+    if (n === undefined) {
+      const result = this.next();
+      revert();
+      return result;
+    }
+
+    const result = [];
+    for (let i = 0; i < n; i++) {
+      result.push(this.next());
+    }
+    revert();
+    return result;
+  }
+
   takeWhile(predicate: (char: string) => boolean): string {
     let result = "";
 
@@ -92,5 +111,14 @@ export abstract class AbstractTokenizer<T> {
 
   isComment(): boolean {
     return this.parserState.peek(2) === "//";
+  }
+
+  errorToken(token: Token<T>, message: string): Token<T> {
+    this.parserState.error(message, token.line, token.col, token.value.length);
+    return token;
+  }
+
+  hasNext(): boolean {
+    return !this.parserState.isEOF();
   }
 }
