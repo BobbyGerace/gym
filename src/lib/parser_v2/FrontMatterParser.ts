@@ -22,7 +22,6 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
       this.tokenizer.hasNext() &&
       this.tokenizer.peek().type !== "delimiter"
     ) {
-      console.log(this.tokenizer.peek());
       const parsedLine = this.parseLine();
       if (parsedLine === null) {
         continue;
@@ -51,7 +50,6 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
         `Expected identifier or string but got ${keyToken.value}`
       );
       this.skipToNextLine();
-      console.log(keyToken);
       return null;
     }
 
@@ -62,7 +60,6 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
         `Expected : but got ${colonToken.value}`
       );
       this.skipToNextLine();
-      console.log(colonToken);
       return null;
     }
 
@@ -73,12 +70,10 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
         `Expected string or value but got ${valueToken.value}`
       );
       this.skipToNextLine();
-      console.log(valueToken);
       return null;
     }
 
     this.skipToNextLine();
-    console.log(valueToken);
 
     const key =
       keyToken.type === "string"

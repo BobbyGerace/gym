@@ -17,15 +17,15 @@ export const allUnits = [
 ] as const;
 
 export const isWeightValueWithUnit = (
-  value: ValueWithUnit<typeof allUnits[number]>
+  value: ValueWithUnit<string>
 ): value is ValueWithUnit<typeof weightUnits[number]> =>
   weightUnits.includes(value.unit as any);
 export const isDistanceValueWithUnit = (
-  value: ValueWithUnit<typeof allUnits[number]>
+  value: ValueWithUnit<string>
 ): value is ValueWithUnit<typeof distanceUnits[number]> =>
   distanceUnits.includes(value.unit as any);
 export const isSets = (
-  value: ValueWithUnit<typeof allUnits[number]>
+  value: ValueWithUnit<string>
 ): value is ValueWithUnit<typeof setsUnits[number]> =>
   setsUnits.includes(value.unit as any);
 
