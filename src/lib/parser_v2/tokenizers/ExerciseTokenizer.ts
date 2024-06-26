@@ -9,8 +9,8 @@ export type ExerciseTokenType =
   | "comment"
   | "eof";
 
-export class ExerciseTokenizer extends AbstractTokenizer<SetTokenType> {
-  next(): Token<SetTokenType> {
+export class ExerciseTokenizer extends AbstractTokenizer<ExerciseTokenType> {
+  next(): Token<ExerciseTokenType> {
     // throw away whitespace
     this.whitespace();
 

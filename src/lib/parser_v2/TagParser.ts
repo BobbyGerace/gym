@@ -32,6 +32,7 @@ export class TagParser extends AbstractParser<TagTokenizer> {
         closingBraceToken,
         `Expected } but got ${closingBraceToken.value}`
       );
+      return null;
     }
 
     return tags;
@@ -86,6 +87,7 @@ export class TagParser extends AbstractParser<TagTokenizer> {
         valueToken,
         `Expected string, number, or identifier but got ${valueToken.value}`
       );
+      return null;
     }
 
     return { key };

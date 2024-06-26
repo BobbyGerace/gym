@@ -173,6 +173,7 @@ export class SetParser extends AbstractParser<SetTokenizer> {
         numberToken,
         `Expected number, got ${numberToken.value}`
       );
+      return null;
     }
 
     const num = this.parseNumber(numberToken.value);
@@ -182,6 +183,7 @@ export class SetParser extends AbstractParser<SetTokenizer> {
         numberToken,
         `Invalid number: ${numberToken.value}`
       );
+      return null;
     }
 
     return num;
