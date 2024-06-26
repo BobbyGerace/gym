@@ -2,7 +2,12 @@ import { AbstractTokenizer, Token } from "./AbstractTokenizer";
 
 const operators = "#&";
 
-type SetTokenType = "operator" | "exerciseName" | "newLine" | "comment" | "eof";
+export type ExerciseTokenType =
+  | "operator"
+  | "exerciseName"
+  | "newLine"
+  | "comment"
+  | "eof";
 
 export class ExerciseTokenizer extends AbstractTokenizer<SetTokenType> {
   next(): Token<SetTokenType> {

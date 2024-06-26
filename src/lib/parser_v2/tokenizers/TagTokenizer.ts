@@ -3,7 +3,7 @@ import { AbstractTokenizer, Token } from "./AbstractTokenizer";
 const digits = "0123456789";
 const operators = ",:";
 
-type TagTokenType =
+export type TagTokenType =
   | "tagStart"
   | "tagEnd"
   | "identifier"

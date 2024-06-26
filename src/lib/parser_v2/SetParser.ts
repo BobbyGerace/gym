@@ -1,4 +1,5 @@
 import { AbstractParser } from "./AbstractParser";
+import { TagParser } from "./TagParser";
 import {
   isDistanceValueWithUnit,
   isSets,
@@ -27,17 +28,17 @@ export class SetParser extends AbstractParser<SetTokenizer> {
   }
 
   readNextValue(): Set | null {
-    const token = this.tokenizer.next();
+    const token = this.tokenizer.peek();
 
     switch (token.type) {
       case "identifier":
-        return this.handleIdentifierToken(token);
+        return this.handleIdentifierToken();
       case "operator":
-        return this.handleOperatorToken(token);
+        return this.handleOperatorToken();
       case "number":
-        return this.handleNumberToken(token);
+        return this.handleNumberToken();
       case "tagStart":
-        return this.handleTagStart(token);
+        return this.handleTagStart();
       case "unknown":
         this.tokenizer.errorToken(
           token,
@@ -51,7 +52,8 @@ export class SetParser extends AbstractParser<SetTokenizer> {
     }
   }
 
-  handleOperatorToken(token: Token<SetTokenType>): Set | null {
+  handleOperatorToken(): Set | null {
+    const token = this.tokenizer.next();
     if (
       token.type === "operator" &&
       this.caseInsensitiveEquals(token.value, "x")
@@ -67,14 +69,16 @@ export class SetParser extends AbstractParser<SetTokenizer> {
     return null;
   }
 
-  handleIdentifierToken(token: Token<SetTokenType>): Set | null {
+  handleIdentifierToken(): Set | null {
+    const token = this.tokenizer.next();
     if (this.caseInsensitiveEquals(token.value, "bw")) return { weight: "bw" };
 
     this.tokenizer.errorToken(token, `Unexpected identifier ${token.value}`);
     return null;
   }
 
-  handleNumberToken(token: Token<SetTokenType>): Set | null {
+  handleNumberToken(): Set | null {
+    const token = this.tokenizer.next();
     const num = this.parseNumber(token.value);
 
     if (num === null) {
@@ -101,13 +105,51 @@ export class SetParser extends AbstractParser<SetTokenizer> {
         next,
         `Expected weight, distance, or sets, but got ${next.value}`
       );
+      return null;
+    }
+
+    if (next.type === "operator" && next.value === ":") {
+      return this.parseTime(num);
     }
 
     return { weight: num };
   }
 
-  handleTagStart(token: Token<SetTokenType>): Set | null {
-    return null;
+  // This function starts from the colon, accepting the first
+  // component of the time as a parameter
+  parseTime(primary: number): Set | null {
+    const colonToken = this.tokenizer.next();
+    if (colonToken.type !== "operator" || colonToken.value !== ":") {
+      // Sanity check: This shouldn't happen
+      throw new Error("Parse error: Expected colon");
+    }
+
+    const secondary = this.expectNumber();
+    if (secondary === null) return null;
+
+    const secondColonToken = this.tokenizer.peek();
+    if (
+      secondColonToken.type === "operator" &&
+      secondColonToken.value === ":"
+    ) {
+      this.tokenizer.next();
+      const tertiary = this.expectNumber();
+      if (tertiary === null) return null;
+
+      return {
+        time: { hours: primary, minutes: secondary, seconds: tertiary },
+      };
+    }
+
+    return { time: { hours: 0, minutes: primary, seconds: secondary } };
+  }
+
+  handleTagStart(): Set | null {
+    const tags = new TagParser(this.tokenizer.parserState).parse();
+
+    if (tags === null || tags.length === 0) return null;
+
+    return { tags };
   }
 
   parseReps(): number[] | null {
@@ -119,7 +161,7 @@ export class SetParser extends AbstractParser<SetTokenizer> {
       else {
         return null;
       }
-    } while (this.tokenizer.peek().value === ",");
+    } while (this.consumeIfComma());
 
     return result;
   }
@@ -143,6 +185,15 @@ export class SetParser extends AbstractParser<SetTokenizer> {
     }
 
     return num;
+  }
+
+  consumeIfComma(): boolean {
+    const token = this.tokenizer.peek();
+    if (token.type === "operator" && token.value === ",") {
+      this.tokenizer.next();
+      return true;
+    }
+    return false;
   }
 
   caseInsensitiveEquals(a: string, b: string) {

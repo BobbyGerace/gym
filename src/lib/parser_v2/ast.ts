@@ -33,7 +33,7 @@ export type Time = { hours: number; minutes: number; seconds: number };
 export type ValueWithUnit<U extends string> = { value: number; unit: U };
 
 // If the shape of this changes, we need to increment the db version
-export type Tag = { key: string; value?: string | number };
+export type Tag = { key: string; value?: string | number | boolean };
 
 export type Exercise = {
   name: string;
