@@ -79,4 +79,15 @@ export abstract class AbstractParser<T extends AbstractTokenizer<any>> {
 
     return null;
   }
+
+  skipToNextContent() {
+    this.tokenizer.whitespace();
+    while (
+      this.tokenizer.hasNext() &&
+      (this.tokenizer.isLineEnd() || this.tokenizer.isComment())
+    ) {
+      this.tokenizer.next();
+      this.tokenizer.whitespace();
+    }
+  }
 }
