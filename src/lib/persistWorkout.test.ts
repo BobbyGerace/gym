@@ -1,6 +1,15 @@
+import { defaultConfig } from "./config";
 import { Database } from "./database";
-import { parseWorkout } from "./parser";
+import { parse } from "./parser";
 import { PersistWorkout } from "./persistWorkout";
+
+const parseWorkout = (input: string) => {
+  const { result, errors } = parse(input);
+  if (errors.length > 0) {
+    throw new Error(errors[0].message);
+  }
+  return result;
+};
 
 const workout1 = `
   ---
@@ -34,7 +43,7 @@ test("saves workout", async () => {
     const fileName = "2023-09-24.gym";
 
     const ast = parseWorkout(workout1);
-    await new PersistWorkout(db).saveWorkout(fileName, ast);
+    await new PersistWorkout(db, defaultConfig).saveWorkout(fileName, ast);
 
     const wRows = await db.query<any>("select * from workout");
     const exRows = await db.query<any>("select * from exercise");
@@ -53,7 +62,7 @@ test("saves workout", async () => {
 
 test("creates exercises correctly", async () => {
   await Database.initializeDatabase(":memory:", async (db) => {
-    const persist = new PersistWorkout(db);
+    const persist = new PersistWorkout(db, defaultConfig);
     await persist.saveWorkout("2023-09-24.gym", parseWorkout(workout1));
     await persist.saveWorkout("2023-09-25.gym", parseWorkout(workout2));
 
@@ -67,7 +76,7 @@ test("removes workout", async () => {
   await Database.initializeDatabase(":memory:", async (db) => {
     const fileName = "2023-09-24.gym";
 
-    const persist = new PersistWorkout(db);
+    const persist = new PersistWorkout(db, defaultConfig);
     await persist.saveWorkout(fileName, parseWorkout(workout1));
     await persist.deleteWorkout(fileName);
 
@@ -86,7 +95,7 @@ test("overwrites workout", async () => {
   await Database.initializeDatabase(":memory:", async (db) => {
     const fileName = "2023-09-24.gym";
 
-    const persist = new PersistWorkout(db);
+    const persist = new PersistWorkout(db, defaultConfig);
     await persist.saveWorkout(fileName, parseWorkout(workout1));
     await persist.saveWorkout(fileName, parseWorkout(workout2));
 

@@ -8,7 +8,3 @@
 4. `npm install -g .`
 
 ## TODO
-
-- Finish making parser resilient
-- Save lb or kg to database even when unspecified
-- Every tokenizer should be able to handle comments, eof, and newlines. Find a way to make this DRY

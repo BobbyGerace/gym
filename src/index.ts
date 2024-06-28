@@ -90,7 +90,7 @@ workout
 workout
   .command("parse <fileName>")
   .description("Tries to parse a file and outputs JSON")
-  .action(route(workoutController.parse));
+  .action((fileName) => route(workoutController.parse)(fileName, stdin));
 
 if (process.stdin.isTTY) {
   program.parse(process.argv);

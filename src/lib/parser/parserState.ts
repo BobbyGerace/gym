@@ -1,6 +1,6 @@
 export const newState = (input: string): ParserState => new ParserState(input);
 
-type ParseError = {
+export type ParseError = {
   message: string;
   line: number;
   col: number;

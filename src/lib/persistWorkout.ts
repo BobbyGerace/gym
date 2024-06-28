@@ -1,3 +1,4 @@
+import { Config } from "./config";
 import { Database } from "./database";
 import { Workout, Exercise, Set } from "./parser/ast";
 import fs from "fs";
@@ -8,7 +9,9 @@ type FlatSet = Omit<Set, "reps" | "sets"> & { reps?: number };
 
 export class PersistWorkout {
   private db: Database;
-  constructor(db: Database) {
+  private config: Config;
+  constructor(db: Database, config: Config) {
+    this.config = config;
     this.db = db;
   }
 
@@ -117,6 +120,8 @@ export class PersistWorkout {
     const flatSets = flattenSets(sets);
 
     const setArgs = flatSets.flatMap((set) => {
+      const defaultWeightUnit =
+        this.config.unitSystem === "imperial" ? "lb" : "kg";
       let weightValue: number | null = null;
       if (set.weight === "bw") weightValue = 0;
       else if (typeof set.weight === "number") weightValue = set.weight;
@@ -125,7 +130,8 @@ export class PersistWorkout {
       let weightUnit: string | null = null;
       if (set.weight === "bw") weightUnit = "bw";
       else if (typeof set.weight === "number") weightUnit = null;
-      else if (typeof set.weight === "object") weightUnit = set.weight.unit;
+      else if (typeof set.weight === "object")
+        weightUnit = set.weight.unit ?? defaultWeightUnit;
 
       return [
         weightValue, // weight_value REAL,

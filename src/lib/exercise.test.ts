@@ -1,8 +1,16 @@
 import { Exercise } from "./exercise";
 import { Database } from "./database";
 import { PersistWorkout } from "./persistWorkout";
-import { parseWorkout } from "./parser";
-import { getConfig } from "./config";
+import { parse } from "./parser";
+import { defaultConfig, getConfig } from "./config";
+
+const parseWorkout = (input: string) => {
+  const { result, errors } = parse(input);
+  if (errors.length > 0) {
+    throw new Error(errors[0].message);
+  }
+  return result;
+};
 
 const workouts = `315x10,8,6
 335x8,4
@@ -16,7 +24,7 @@ const workouts = `315x10,8,6
 
 test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
   await Database.initializeDatabase(":memory:", async (db) => {
-    const persist = new PersistWorkout(db);
+    const persist = new PersistWorkout(db, defaultConfig);
     const exercise = new Exercise(getConfig(), db);
     for (let i = 0; i < workouts.length; i++) {
       const ast = parseWorkout(workouts[i]);
@@ -112,7 +120,7 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
 
 test("getExerciseByName should get the exercise", async () => {
   await Database.initializeDatabase(":memory:", async (db) => {
-    const persist = new PersistWorkout(db);
+    const persist = new PersistWorkout(db, defaultConfig);
     const ex = new Exercise(getConfig(), db);
     for (let i = 0; i < workouts.length; i++) {
       const ast = parseWorkout(workouts[i]);
@@ -126,7 +134,7 @@ test("getExerciseByName should get the exercise", async () => {
 
 test("getExerciseByName should be case insensitive", async () => {
   await Database.initializeDatabase(":memory:", async (db) => {
-    const persist = new PersistWorkout(db);
+    const persist = new PersistWorkout(db, defaultConfig);
     const ex = new Exercise(getConfig(), db);
     for (let i = 0; i < workouts.length; i++) {
       const ast = parseWorkout(workouts[i]);

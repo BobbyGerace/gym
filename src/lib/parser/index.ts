@@ -1,9 +1,14 @@
 import { ExerciseParser } from "./ExerciseParser";
 import { FrontMatterParser } from "./FrontMatterParser";
+import { ParseError, ParserState } from "./parserState";
 import { Exercise, Workout } from "./ast";
-import { ParserState } from "./parserState";
 
-export const parseWorkout = (workout: string): Workout => {
+export { Exercise, Workout, FrontMatter, Set, Tag, Time } from "./ast";
+export { ParseError } from "./parserState";
+
+export const parse = (
+  workout: string
+): { result: Workout; errors: ParseError[] } => {
   const state = new ParserState(workout);
   const frontMatterParser = new FrontMatterParser(state);
   const exerciseParser = new ExerciseParser(state);
@@ -46,9 +51,22 @@ export const parseWorkout = (workout: string): Workout => {
     } as Exercise);
   }
 
-  if (state.errors.length) console.log(workout, state.errors);
-  return {
+  const result = {
     frontMatter,
     exercises,
   };
+
+  return { result, errors: state.errors };
+};
+
+const formatError = (error: ParseError): string => {
+  return `Parse error ${error.line}:${error.col}: ${error.message}`;
+};
+
+export const parseOrThrow = (workout: string): Workout => {
+  const { result, errors } = parse(workout);
+  if (errors.length > 0) {
+    throw new Error(errors.map(formatError).join("\n"));
+  }
+  return result;
 };

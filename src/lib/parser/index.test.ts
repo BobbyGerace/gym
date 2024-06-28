@@ -1,4 +1,12 @@
-import { parseWorkout } from "./index";
+import { parse } from "./index";
+
+const parseWorkout = (input: string) => {
+  const { result, errors } = parse(input);
+  if (errors.length > 0) {
+    throw new Error(errors[0].message);
+  }
+  return result;
+};
 
 const newState = (a: string) => a;
 

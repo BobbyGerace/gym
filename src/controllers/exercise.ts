@@ -12,6 +12,8 @@ export class ExerciseController {
     this.config = config;
   }
 
+  // TODO: Add a rename method
+
   list = () => {
     Database.open(this.config.databaseFile, async (db) => {
       const rows = await db.query<{ name: string }>(
@@ -48,7 +50,7 @@ export class ExerciseController {
             this.config.workoutDir,
             h.fileName
           );
-          // TODO: There's probably a more efficient way to do this
+
           const file = fs.readFileSync(filePath);
           const sectionLines = file
             .toString()

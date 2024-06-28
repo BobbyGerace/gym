@@ -1,6 +1,6 @@
 import { Config } from "../lib/config";
 import { Database } from "../lib/database";
-import { parseWorkout } from "../lib/parser";
+import { parseOrThrow } from "../lib/parser";
 import { PersistWorkout } from "../lib/persistWorkout";
 import { yNPrompt } from "../lib/prompt";
 import { spawn } from "child_process";
@@ -18,11 +18,11 @@ export class WorkoutController {
 
   save = async (fileNames: string[]) => {
     await Database.open(this.config.databaseFile, async (db) => {
-      const persist = new PersistWorkout(db);
+      const persist = new PersistWorkout(db, this.config);
       for (let i = 0; i < fileNames.length; i++) {
         const fileName = fileNames[i];
         try {
-          const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
+          const ast = parseOrThrow(fs.readFileSync(fileName, "utf-8"));
           await persist.saveWorkout(fileName, ast);
         } catch (e) {
           if (e instanceof Error)
@@ -33,7 +33,6 @@ export class WorkoutController {
     });
   };
 
-  // TODO: this should be able to read from stdin
   new = async (
     options: { template: string; date: string; name: string },
     stdin: string
@@ -50,7 +49,7 @@ export class WorkoutController {
       let fileContents = template ? getFileFromTemplate(template) : stdin;
 
       fileContents = setFrontMatter(fileContents, date, name);
-      return console.log(fileName, fileContents);
+
       fs.writeFileSync(this.workoutPath(fileName), fileContents);
 
       return await this.edit(fileName);
@@ -64,20 +63,23 @@ export class WorkoutController {
         if (options.deleteFile && fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
-        await new PersistWorkout(db).deleteWorkout(filePath);
+        await new PersistWorkout(db, this.config).deleteWorkout(filePath);
       }
     });
   };
 
   edit = async (fileName: string) => {
-    // TODO: check unsynced files and prompt
-    await Database.open(this.config.databaseFile, () => Promise.resolve());
-    this.openInEditor(fileName);
+    await Database.open(this.config.databaseFile, async (db) => {
+      if (await changedFilesPrompt(this.config, db)) {
+        await new DbController(this.config).sync({ yes: true });
+      }
+      this.openInEditor(fileName);
+    });
   };
 
-  // TODO: this should be able to read from stdin
-  parse = (fileName: string) => {
-    const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
+  parse = (fileName?: string, stdin?: string) => {
+    const fileContents = fileName ? fs.readFileSync(fileName, "utf-8") : stdin;
+    const ast = parseOrThrow(fileContents ?? "");
     console.log(JSON.stringify(ast, null, 2));
   };
 
@@ -102,6 +104,7 @@ export class WorkoutController {
   }
 
   private async afterSaveFlow(fileName: string) {
+    // TODO: finish this
     // Check for errors
     // print new exercises to be created
     // print new PRs for existing exercises
@@ -120,12 +123,12 @@ export class WorkoutController {
 
     let parts = [date];
     if (title) {
-      // TODO: Should probably truncate this if it gets too long
       let normalizedTitle = title
         .replace(/[\W_]/g, " ")
         .trim()
         .replace(/\s+/g, "-")
-        .toLowerCase();
+        .toLowerCase()
+        .substring(0, 241); // To keep the file name < 255 char
       parts.push(normalizedTitle);
     }
 

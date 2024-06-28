@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import { yNPrompt } from "../lib/prompt";
 import { PersistWorkout } from "../lib/persistWorkout";
-import { parseWorkout } from "../lib/parser";
+import { parseOrThrow } from "../lib/parser";
 import { findChangedFiles } from "../lib/findChangedFiles";
 
 export class DbController {
@@ -58,7 +58,7 @@ export class DbController {
       const confirmed = options.yes || (await yNPrompt("Continue?"));
       if (!confirmed) return false;
 
-      const persist = new PersistWorkout(db);
+      const persist = new PersistWorkout(db, this.config);
       for (const file of deleted) {
         await persist.deleteWorkout(file);
       }
@@ -69,7 +69,7 @@ export class DbController {
             this.config.workoutDir,
             file
           );
-          const ast = parseWorkout(fs.readFileSync(fileName, "utf-8"));
+          const ast = parseOrThrow(fs.readFileSync(fileName, "utf-8"));
           await persist.saveWorkout(file, ast);
         } catch (e) {
           if (e instanceof Error)

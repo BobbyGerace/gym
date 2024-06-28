@@ -13,7 +13,7 @@ export type Config = {
   locale: string;
 };
 
-const defaultConfig: Config = {
+export const defaultConfig: Config = {
   databaseFile: "./.gym.db",
   editor: "nvim",
   editorArgs: [],
