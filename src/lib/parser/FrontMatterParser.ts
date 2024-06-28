@@ -14,7 +14,7 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
       return {};
     }
 
-    this.skipToNextLine();
+    this.skipToNextContent();
 
     const frontMatter: Record<string, string | number | boolean> = {};
 
@@ -41,6 +41,11 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
     return frontMatter;
   }
 
+  isFrontMatterDelimiter(): boolean {
+    const token = this.tokenizer.peek();
+    return token.type === "delimiter";
+  }
+
   parseLine(): [string, string | number | boolean] | null {
     const keyToken = this.tokenizer.next();
 
@@ -49,7 +54,7 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
         keyToken,
         `Expected identifier or string but got ${keyToken.value}`
       );
-      this.skipToNextLine();
+      this.skipToNextContent();
       return null;
     }
 
@@ -59,7 +64,7 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
         colonToken,
         `Expected : but got ${colonToken.value}`
       );
-      this.skipToNextLine();
+      this.skipToNextContent();
       return null;
     }
 
@@ -69,11 +74,11 @@ export class FrontMatterParser extends AbstractParser<FrontMatterTokenizer> {
         valueToken,
         `Expected string or value but got ${valueToken.value}`
       );
-      this.skipToNextLine();
+      this.skipToNextContent();
       return null;
     }
 
-    this.skipToNextLine();
+    this.skipToNextContent();
 
     const key =
       keyToken.type === "string"

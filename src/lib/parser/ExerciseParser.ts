@@ -11,6 +11,7 @@ export class ExerciseParser extends AbstractParser<ExerciseTokenizer> {
   TokenizerClass = ExerciseTokenizer;
 
   parse(): InternalExercise | null {
+    this.skipToNextContent();
     const operatorToken = this.tokenizer.next();
 
     if (operatorToken.type !== "operator") {

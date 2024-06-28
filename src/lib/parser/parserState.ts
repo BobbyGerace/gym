@@ -42,8 +42,10 @@ export class ParserState {
   }
 
   inc(n = 1) {
+    let result = this.input.slice(this.pos, this.pos + n);
     this._pos += n;
     this._col += n;
+    return result;
   }
 
   incLine() {

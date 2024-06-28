@@ -70,7 +70,7 @@ export abstract class AbstractParser<T extends AbstractTokenizer<any>> {
   }
 
   parseNumber(value: string): number | null {
-    if (/^[\d-.]+$/.test(value)) {
+    if (/^-?\d+\.?\d*$/.test(value)) {
       const maybeNum = parseFloat(value);
       if (!isNaN(maybeNum)) {
         return maybeNum;

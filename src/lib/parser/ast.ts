@@ -17,15 +17,15 @@ export const allUnits = [
 ] as const;
 
 export const isWeightValueWithUnit = (
-  value: ValueWithUnit<typeof allUnits[number]>
+  value: ValueWithUnit<string>
 ): value is ValueWithUnit<typeof weightUnits[number]> =>
   weightUnits.includes(value.unit as any);
 export const isDistanceValueWithUnit = (
-  value: ValueWithUnit<typeof allUnits[number]>
+  value: ValueWithUnit<string>
 ): value is ValueWithUnit<typeof distanceUnits[number]> =>
   distanceUnits.includes(value.unit as any);
 export const isSets = (
-  value: ValueWithUnit<typeof allUnits[number]>
+  value: ValueWithUnit<string>
 ): value is ValueWithUnit<typeof setsUnits[number]> =>
   setsUnits.includes(value.unit as any);
 
@@ -33,7 +33,7 @@ export type Time = { hours: number; minutes: number; seconds: number };
 export type ValueWithUnit<U extends string> = { value: number; unit: U };
 
 // If the shape of this changes, we need to increment the db version
-export type Tag = { key: string; value?: string | number };
+export type Tag = { key: string; value?: string | number | boolean };
 
 export type Exercise = {
   name: string;
@@ -44,7 +44,7 @@ export type Exercise = {
   lineEnd: number;
 };
 
-export type FrontMatter = Record<string, string | number>;
+export type FrontMatter = Record<string, string | number | boolean>;
 
 export type Workout = {
   frontMatter: FrontMatter;

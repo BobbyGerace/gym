@@ -15,7 +15,6 @@ export type FrontMatterTokenType =
 
 export class FrontMatterTokenizer extends AbstractTokenizer<FrontMatterTokenType> {
   next(): Token<FrontMatterTokenType> {
-    // throw away whitespace
     this.whitespace();
 
     const nextChar = this.parserState.char();

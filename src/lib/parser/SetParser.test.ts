@@ -91,7 +91,6 @@ describe("SetParser", () => {
 
   test("parseSet should parse set with whitespace", () => {
     const parsed = parseSet(setWithWhitespace);
-    console.log(setWithWhitespace.errors);
     expect(parsed).toEqual({
       weight: 100,
       reps: [2, 3, 4, 5],
