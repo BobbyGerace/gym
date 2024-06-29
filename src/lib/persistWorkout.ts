@@ -1,7 +1,6 @@
 import { Config } from "./config";
 import { Database } from "./database";
 import { Workout, Exercise, Set } from "./parser/ast";
-import fs from "fs";
 import path from "path";
 
 type ExerciseWithId = Exercise & { id: number };
@@ -167,10 +166,6 @@ export class PersistWorkout {
       setArgs
     );
     return rows.map((row) => row.id);
-  }
-
-  fileExists(fileName: string): boolean {
-    return fs.existsSync(fileName);
   }
 
   async deleteWorkout(fileName: string): Promise<void> {

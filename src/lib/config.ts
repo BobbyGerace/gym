@@ -25,6 +25,11 @@ export const defaultConfig: Config = {
   locale: "en-US",
 };
 
+export const testConfig: Config = {
+  ...defaultConfig,
+  databaseFile: ":memory:",
+};
+
 let cachedConfig: Config | null = null;
 
 // Gets the file './gymconfig.json' in the current directory

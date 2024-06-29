@@ -1,5 +1,4 @@
 import sqlite3 from "sqlite3";
-import { yNPrompt } from "./prompt";
 import fs from "fs";
 
 const DB_VERSION = 1;
@@ -47,6 +46,8 @@ export class Database {
     beforeClose?: (db: Database) => Promise<void>
   ): Promise<void> {
     const db = await openDatabase(databaseFile);
+    // This will make sure we can nest database.open during testing
+    Database.connections[databaseFile] = db;
     await new Promise<void>((resolve) => {
       // Create tables
       db.serialize(() => {
@@ -126,7 +127,7 @@ export class Database {
     });
 
     if (beforeClose) await beforeClose(new Database(db));
-
+    delete Database.connections[databaseFile];
     return await closeDatabase(db);
   }
 
