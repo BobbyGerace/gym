@@ -38,7 +38,13 @@ export class DbController {
     }
   };
 
-  sync = async (options: { yes: boolean }): Promise<boolean> => {
+  sync = async (options: {
+    yes?: boolean;
+    silent?: boolean;
+  }): Promise<boolean> => {
+    const log: (s: string) => void =
+      options.silent && options.yes ? (s) => {} : (s) => console.log(s);
+
     return await Database.open(this.config.databaseFile, async (db) => {
       const { created, updated, deleted } = await findChangedFiles(
         this.config,
@@ -46,14 +52,14 @@ export class DbController {
       );
 
       if (deleted.length + updated.length + created.length === 0) {
-        console.log("Already up to date.");
+        log("Already up to date.");
         return true;
       }
 
-      console.log("The following changes will be made:");
-      console.log(`  ${created.length} files created`);
-      console.log(`  ${updated.length} files updated`);
-      console.log(`  ${deleted.length} files deleted`);
+      log("The following changes will be made:");
+      log(`  ${created.length} files created`);
+      log(`  ${updated.length} files updated`);
+      log(`  ${deleted.length} files deleted`);
 
       const confirmed = options.yes || (await yNPrompt("Continue?"));
       if (!confirmed) return false;
@@ -78,7 +84,7 @@ export class DbController {
         }
       }
 
-      console.log("Database synced successfully.");
+      log("Database synced successfully.");
       return true;
     });
   };

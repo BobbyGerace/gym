@@ -30,20 +30,26 @@ let stdin = "";
 const exerciseController = new ExerciseController(config);
 exercise
   .command("list")
-  .description("output a list of exercises in the database")
+  .description("Output a list of exercises in the database")
   .action(route(exerciseController.list));
 
 exercise
   .command("prs <exerciseName>")
-  .description("outputs PRs for the given exercise")
+  .description("Output PRs for the given exercise")
   .action(route(exerciseController.prs));
 
 exercise
   .command("history <exerciseName>")
   .option("-n, --number <number>", "number of items to find")
   .option("-l, --locations-only", "Only print the file names and line numbers")
-  .description("outputs file names and line numbers for a given exercise")
+  .description("Output file names and line numbers for a given exercise")
   .action(route(exerciseController.history));
+
+exercise
+  .command("rename <oldName> <newName>")
+  .option("-m, --merge", "If the new exercise already exists, merge the two")
+  .description("Rename an exercise and update all references to it")
+  .action(route(exerciseController.rename));
 
 const db = program.command("db");
 

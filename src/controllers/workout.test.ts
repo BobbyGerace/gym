@@ -1,7 +1,9 @@
 import { Database } from "../lib/database";
+import fs from "fs";
 import mockFs from "mock-fs";
 import { testConfig } from "../lib/config";
 import { WorkoutController } from "./workout";
+import { DbController } from "./db";
 
 const workout1 = `
   ---
@@ -44,24 +46,26 @@ describe("WorkoutController", () => {
     mockFs.restore();
   });
 
-  test("save", async () => {
-    await Database.initializeDatabase(":memory:", async (db) => {
-      const fileName = "workouts/2023-09-24.gym";
+  describe("save", () => {
+    test("saves the file to the database", async () => {
+      await Database.initializeDatabase(":memory:", async (db) => {
+        const fileName = "workouts/2023-09-24.gym";
 
-      await new WorkoutController(testConfig).save([fileName]);
+        await new WorkoutController(testConfig).save([fileName]);
 
-      const wRows = await db.query<any>("select * from workout");
-      const exRows = await db.query<any>("select * from exercise");
-      const exIRows = await db.query<any>("select * from exercise_instance");
-      const sRows = await db.query<any>('select * from "set"');
-      expect(wRows.length).toBe(1);
-      expect(wRows[0].file_name).toBe("2023-09-24.gym");
-      expect(wRows[0].front_matter).toBe('{"hello":"world"}');
-      expect(exRows.length).toBe(2);
-      expect(exIRows.length).toBe(2);
+        const wRows = await db.query<any>("select * from workout");
+        const exRows = await db.query<any>("select * from exercise");
+        const exIRows = await db.query<any>("select * from exercise_instance");
+        const sRows = await db.query<any>('select * from "set"');
+        expect(wRows.length).toBe(1);
+        expect(wRows[0].file_name).toBe("2023-09-24.gym");
+        expect(wRows[0].front_matter).toBe('{"hello":"world"}');
+        expect(exRows.length).toBe(2);
+        expect(exIRows.length).toBe(2);
 
-      // this part tests the flattening behavior for both kinds of repeat sets
-      expect(sRows.length).toBe(10);
+        // this part tests the flattening behavior for both kinds of repeat sets
+        expect(sRows.length).toBe(10);
+      });
     });
   });
 });

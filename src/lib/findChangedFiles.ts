@@ -9,6 +9,11 @@ export const findChangedFiles = async (
   db: Database
 ): Promise<{ updated: string[]; created: string[]; deleted: string[] }> => {
   const workoutPath = path.join(process.cwd(), config.workoutDir);
+  // check if the directory exists
+  if (!fs.existsSync(workoutPath)) {
+    throw new Error(`Workout directory not found: ${workoutPath}`);
+  }
+
   const files = fs
     .readdirSync(workoutPath)
     .filter((d) => d.match(/^\d{4}-\d{2}-\d{2}.*\.gym$/));

@@ -22,6 +22,22 @@ export class Exercise {
     this.config = config;
   }
 
+  async rename(id: number, newName: string) {
+    await this.db.query("update exercise set name = ? where id = ?;", [
+      newName,
+      id,
+    ]);
+  }
+
+  async merge(fromId: number, intoId: number) {
+    await this.db.query(
+      "update exercise_instance set exercise_id = ? where exercise_id = ?;",
+      [intoId, fromId]
+    );
+
+    await this.db.query("delete from exercise where id = ?;", [fromId]);
+  }
+
   async getExerciseByName(name: string): Promise<ExerciseRow | null> {
     const results = await this.db.query<ExerciseRow>(
       "select * from exercise where name = ? COLLATE NOCASE;",

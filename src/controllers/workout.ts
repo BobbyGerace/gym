@@ -34,7 +34,7 @@ export class WorkoutController {
   };
 
   new = async (
-    options: { template: string; date: string; name: string },
+    options: { template?: string; date?: string; name?: string },
     stdin: string
   ) => {
     // Make sure the database is healthy
@@ -48,7 +48,7 @@ export class WorkoutController {
 
       let fileContents = template ? getFileFromTemplate(template) : stdin;
 
-      fileContents = setFrontMatter(fileContents, date, name);
+      fileContents = setFrontMatter(fileContents, workoutDate, name);
 
       fs.writeFileSync(this.workoutPath(fileName), fileContents);
 

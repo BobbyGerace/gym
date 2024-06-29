@@ -12,7 +12,49 @@ export class ExerciseController {
     this.config = config;
   }
 
-  // TODO: Add a rename method
+  rename = async (
+    oldName: string,
+    newName: string,
+    options: { merge?: boolean }
+  ) => {
+    await Database.open(this.config.databaseFile, async (db) => {
+      // TODO: Should we check whether there are unsynced files?
+      const exercise = new Exercise(this.config, db);
+
+      const oldEx = await exercise.getExerciseByName(oldName);
+      if (!oldEx) {
+        throw new Error(`Exercise not found: ${oldName}`);
+      }
+      const history = await exercise.getHistory(oldEx.id, 1_000_000);
+
+      const newEx = await exercise.getExerciseByName(newName);
+      if (newEx !== null && !options.merge) {
+        throw new Error(
+          `Exercise already exists: ${newName}. Use --merge to merge histories.`
+        );
+      } else if (newEx !== null && options.merge) {
+        await exercise.merge(oldEx.id, newEx.id);
+      } else {
+        await exercise.rename(oldEx.id, newName);
+      }
+
+      for (const h of history) {
+        const filePath = path.join(
+          process.cwd(),
+          this.config.workoutDir,
+          h.fileName
+        );
+
+        const file = fs.readFileSync(filePath, "utf-8");
+        const newFile = replaceExerciseInFile(
+          file,
+          oldName,
+          newEx?.name ?? newName
+        );
+        fs.writeFileSync(filePath, newFile);
+      }
+    });
+  };
 
   list = () => {
     Database.open(this.config.databaseFile, async (db) => {
@@ -31,8 +73,7 @@ export class ExerciseController {
       const exercise = new Exercise(this.config, db);
       const ex = await exercise.getExerciseByName(exName);
       if (!ex) {
-        console.error(`Exercise not found: ${exName}`);
-        return process.exit(1);
+        throw new Error(`Exercise not found: ${exName}`);
       }
 
       const history = await exercise.getHistory(ex.id, options.number);
@@ -75,8 +116,7 @@ export class ExerciseController {
       const exercise = new Exercise(this.config, db);
       const ex = await exercise.getExerciseByName(exName);
       if (!ex) {
-        console.error(`Exercise not found: ${exName}`);
-        return process.exit(1);
+        throw new Error(`Exercise not found: ${exName}`);
       }
 
       const prs = await exercise.getRepMaxPrs(ex.id);
@@ -99,3 +139,21 @@ export class ExerciseController {
     });
   };
 }
+
+// This seems horrible, but it's officially recommended by MDN so...
+function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+}
+
+function escapeReplacement(str: string) {
+  return str.replace(/\$/g, "$$$$");
+}
+
+const replaceExerciseInFile = (
+  fileContents: string,
+  oldName: string,
+  newName: string
+) => {
+  const regex = new RegExp(`^(\\s*[#&]\\s*)(${escapeRegExp(oldName)})`, "gim");
+  return fileContents.replace(regex, `$1${escapeReplacement(newName)}`);
+};
