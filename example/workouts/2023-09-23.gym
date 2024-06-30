@@ -10,7 +10,7 @@ date: Sat Sep 23, 2023
 300lb 100ft
 
 # Deadlift
-365x1 10 sets {EMOM, speed_work}
+365x1 10 sets {EMOM, speed_work, chains: 40}
 
 # Running
 1mi 6:00

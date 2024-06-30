@@ -1,9 +1,7 @@
 import { Database } from "../lib/database";
-import fs from "fs";
 import mockFs from "mock-fs";
 import { testConfig } from "../lib/config";
 import { WorkoutController } from "./workout";
-import { DbController } from "./db";
 
 const workout1 = `
   ---
