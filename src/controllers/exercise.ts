@@ -56,8 +56,8 @@ export class ExerciseController {
     });
   };
 
-  list = () => {
-    Database.open(this.config.databaseFile, async (db) => {
+  list = async () => {
+    await Database.open(this.config.databaseFile, async (db) => {
       const rows = await db.query<{ name: string }>(
         "select name from exercise order by id asc;"
       );

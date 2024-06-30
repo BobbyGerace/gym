@@ -50,9 +50,10 @@ export class WorkoutController {
 
       fileContents = setFrontMatter(fileContents, workoutDate, name);
 
-      fs.writeFileSync(this.workoutPath(fileName), fileContents);
+      const filePath = this.workoutPath(fileName);
+      fs.writeFileSync(filePath, fileContents);
 
-      return await this.edit(fileName);
+      return this.openInEditor(filePath);
     });
   };
 
@@ -68,12 +69,12 @@ export class WorkoutController {
     });
   };
 
-  edit = async (fileName: string) => {
+  edit = async (filePath: string) => {
     await Database.open(this.config.databaseFile, async (db) => {
       if (await changedFilesPrompt(this.config, db)) {
         await new DbController(this.config).sync({ yes: true });
       }
-      this.openInEditor(fileName);
+      this.openInEditor(filePath);
     });
   };
 
@@ -83,20 +84,23 @@ export class WorkoutController {
     console.log(JSON.stringify(ast, null, 2));
   };
 
-  private openInEditor(fileName: string) {
+  private openInEditor(filePath: string) {
     const editor = this.config.editor;
     const editorArgs = this.config.editorArgs;
-    const args = [...editorArgs, fileName];
+    const args = [...editorArgs, filePath];
 
-    spawn(editor, args, { stdio: "inherit" }).on("exit", (code) => {
-      if (code === 0) {
-        this.afterSaveFlow(fileName);
-      } else {
-        console.error(
-          `Editor exited with error code ${code}. Changes have not been saved to the database`
-        );
+    spawn(editor, args, { stdio: "inherit", env: { ...process.env } }).on(
+      "exit",
+      (code) => {
+        if (code === 0) {
+          this.afterSaveFlow(filePath);
+        } else {
+          console.error(
+            `Editor exited with error code ${code}. Changes have not been saved to the database`
+          );
+        }
       }
-    });
+    );
   }
 
   private workoutPath(fileName = "") {

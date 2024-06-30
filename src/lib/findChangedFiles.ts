@@ -55,8 +55,8 @@ export const changedFilesPrompt = async (
   if (created.length + updated.length + deleted.length === 0) return false;
 
   console.log("The following unsaved changes were found");
-  console.log(`  ${created} files created`);
-  console.log(`  ${updated} files updated`);
-  console.log(`  ${deleted} files deleted`);
+  console.log(`  ${created.length} files created`);
+  console.log(`  ${updated.length} files updated`);
+  console.log(`  ${deleted.length} files deleted`);
   return await yNPrompt("Would you like to sync these files now?");
 };

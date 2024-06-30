@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command } from "commander";
 import { getConfig } from "./lib/config";
 import { DbController } from "./controllers/db";
@@ -73,6 +75,8 @@ workout
   .command("save <fileNames...>")
   .description("Parse the workout and save it to the database")
   .action(route(workoutController.save));
+
+workout.command("test").action(route(workoutController.test));
 
 workout
   .command("new")

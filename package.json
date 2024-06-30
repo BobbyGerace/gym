@@ -4,14 +4,14 @@
   "description": "A command-line utility to work with text-based workout logs",
   "main": "src/index.ts",
   "bin": {
-    "gym": "./bin/gym"
+    "gym": "./build/index.js"
   },
   "scripts": {
     "test": "jest ./src",
     "test:watch": "jest --watch ./src",
     "test:single": "jest --watchAll=false ",
     "types": "tsc --noEmit",
-    "build": "tsc --outDir build && pkg ./build/index.js -o ./bin/gym",
+    "build": "tsc --outDir build",
     "dev": "tsc --outDir build --watch"
   },
   "repository": {
@@ -26,14 +26,13 @@
   "homepage": "https://github.com/BobbyGerace/gym#readme",
   "devDependencies": {
     "@types/jest": "^29.5.5",
+    "@types/mock-fs": "^4.13.4",
     "jest": "^29.7.0",
     "mock-fs": "^5.2.0",
-    "pkg": "^5.8.1",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@types/mock-fs": "^4.13.4",
     "commander": "^11.0.0",
     "sqlite3": "^5.1.6"
   }
