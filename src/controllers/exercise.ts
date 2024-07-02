@@ -79,7 +79,9 @@ export class ExerciseController {
       const history = await exercise.getHistory(ex.id, options.number);
 
       if (options.locationsOnly) {
-        history.forEach((h) => console.log(`${h.lineStart}:${h.fileName}`));
+        history.forEach((h) =>
+          console.log(`${this.relativePath(h.fileName)}:${h.lineStart}`)
+        );
       } else {
         if (history.length === 0) {
           console.log(`No history found for ${exName}`);
@@ -138,6 +140,10 @@ export class ExerciseController {
       });
     });
   };
+
+  private relativePath(fileName = "") {
+    return path.join(this.config.workoutDir, fileName);
+  }
 }
 
 // This seems horrible, but it's officially recommended by MDN so...

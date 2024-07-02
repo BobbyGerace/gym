@@ -76,8 +76,6 @@ workout
   .description("Parse the workout and save it to the database")
   .action(route(workoutController.save));
 
-workout.command("test").action(route(workoutController.test));
-
 workout
   .command("new")
   .option("-t, --template <templateFile>", "Create from a template")
@@ -101,6 +99,12 @@ workout
   .command("parse <fileName>")
   .description("Tries to parse a file and outputs JSON")
   .action((fileName) => route(workoutController.parse)(fileName, stdin));
+
+workout
+  .command("list")
+  .option("-n, --number", "Number of workouts to list")
+  .description("Lists the file paths of most recent workouts")
+  .action(route(workoutController.list));
 
 if (process.stdin.isTTY) {
   program.parse(process.argv);

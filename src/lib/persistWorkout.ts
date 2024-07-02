@@ -168,6 +168,14 @@ export class PersistWorkout {
     return rows.map((row) => row.id);
   }
 
+  async listWorkouts(
+    num: number
+  ): Promise<{ fileName: string; date: string }[]> {
+    return this.db.query<{ fileName: string; date: string }>(
+      `SELECT file_name as fileName, workout_date as date FROM workout ORDER BY workout_date DESC LIMIT ${num};`
+    );
+  }
+
   async deleteWorkout(fileName: string): Promise<void> {
     await this.db.query(`PRAGMA foreign_keys = ON;`);
     await this.db.query(`DELETE FROM workout WHERE file_name = ?;`, [fileName]);

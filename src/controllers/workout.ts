@@ -16,6 +16,18 @@ export class WorkoutController {
     this.config = config;
   }
 
+  list = async (options: { number: number }) => {
+    await Database.open(this.config.databaseFile, async (db) => {
+      const persist = new PersistWorkout(db, this.config);
+      const workouts = await persist.listWorkouts(options.number);
+      const workoutPaths = workouts.map((workout) => {
+        return path.join(this.config.workoutDir, workout.fileName);
+      });
+
+      console.log(workoutPaths.join("\n"));
+    });
+  };
+
   save = async (fileNames: string[]) => {
     await Database.open(this.config.databaseFile, async (db) => {
       const persist = new PersistWorkout(db, this.config);
