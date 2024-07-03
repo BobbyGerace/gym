@@ -1,7 +1,8 @@
 import { ExerciseParser } from "./ExerciseParser";
 import { FrontMatterParser } from "./FrontMatterParser";
 import { ParseError, ParserState } from "./parserState";
-import { Exercise, Workout } from "./ast";
+import { Exercise, Set, Workout } from "./ast";
+import { SetParser } from "./SetParser";
 
 export { Exercise, Workout, FrontMatter, Set, Tag, Time } from "./ast";
 export { ParseError } from "./parserState";
@@ -69,4 +70,17 @@ export const parseOrThrow = (workout: string): Workout => {
     throw new Error(errors.map(formatError).join("\n"));
   }
   return result;
+};
+
+export const parseSet = (
+  set: string
+): { result: Set; errors: ParseError[] } => {
+  const state = new ParserState(set);
+
+  const setParser = new SetParser(state);
+  const result = setParser.parse();
+
+  const errors = state.errors;
+
+  return { result, errors };
 };

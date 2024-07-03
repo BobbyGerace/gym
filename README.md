@@ -11,6 +11,7 @@
 
 - e1rm calculator (& nvim function)
 - after save flow
+- Better error handling in `parse`
 - wrap nvim stuff in plugin
 - fill out readmes
 - maybe split out parser
