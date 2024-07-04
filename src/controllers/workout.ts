@@ -1,6 +1,6 @@
 import { Config } from "../lib/config";
 import { Database } from "../lib/database";
-import { parseOrThrow } from "../lib/parser";
+import { parse, parseOrThrow } from "../lib/parser";
 import { PersistWorkout } from "../lib/persistWorkout";
 import { yNPrompt } from "../lib/prompt";
 import { spawn } from "child_process";
@@ -9,6 +9,8 @@ import fs from "fs";
 import path from "path";
 import { DbController } from "./db";
 import { changedFilesPrompt } from "../lib/findChangedFiles";
+import { formatErrorMessage } from "../lib/formatErrorMessage";
+import chalk from "chalk";
 
 export class WorkoutController {
   private config: Config;
@@ -90,10 +92,30 @@ export class WorkoutController {
     });
   };
 
-  parse = (fileName?: string, stdin?: string) => {
-    const fileContents = fileName ? fs.readFileSync(fileName, "utf-8") : stdin;
-    const ast = parseOrThrow(fileContents ?? "");
-    console.log(JSON.stringify(ast, null, 2));
+  parse = (
+    options: { jsonErrors?: boolean; prettyPrint?: boolean },
+    fileName?: string,
+    stdin?: string
+  ) => {
+    const stringify = (obj: any) =>
+      options.prettyPrint ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
+
+    const fileContents =
+      (fileName ? fs.readFileSync(fileName, "utf-8") : stdin) ?? "";
+
+    const { result, errors } = parse(fileContents);
+
+    if (errors.length > 0 && options.jsonErrors) {
+      console.log(stringify(errors));
+    } else if (errors.length > 0) {
+      console.error(
+        chalk.red(
+          errors.map((e) => formatErrorMessage(e, fileContents)).join("\n")
+        )
+      );
+    } else {
+      console.log(stringify(result));
+    }
   };
 
   private openInEditor(filePath: string) {
@@ -108,7 +130,9 @@ export class WorkoutController {
           this.afterSaveFlow(filePath);
         } else {
           console.error(
-            `Editor exited with error code ${code}. Changes have not been saved to the database`
+            chalk.red(
+              `Editor exited with error code ${code}. Changes have not been saved to the database`
+            )
           );
         }
       }

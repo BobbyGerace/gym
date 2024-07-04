@@ -8,7 +8,6 @@ export class CalcController {
     this.config = config;
   }
 
-  // TODO: Add route
   e1rm = async (set: string, options: { formula?: Config["e1rmFormula"] }) => {
     const formula = options.formula || this.config.e1rmFormula;
 
@@ -26,7 +25,6 @@ export class CalcController {
     console.log(this.round2(max));
   };
 
-  // TODO: Add route
   convertRpe = async (
     fromSet: string,
     toSet: string,

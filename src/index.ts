@@ -6,6 +6,7 @@ import { DbController } from "./controllers/db";
 import { WorkoutController } from "./controllers/workout";
 import { ExerciseController } from "./controllers/exercise";
 import { CalcController } from "./controllers/calc";
+import chalk from "chalk";
 
 const config = getConfig();
 const program = new Command();
@@ -22,7 +23,7 @@ function route<T extends (...args: any) => any>(
     try {
       await fn(...args);
     } catch (e) {
-      if (e instanceof Error) console.error("ERROR: " + e.message);
+      if (e instanceof Error) console.error(chalk.red("ERROR: " + e.message));
       process.exit(1);
     }
   }) as any;
@@ -98,8 +99,18 @@ workout
 
 workout
   .command("parse <fileName>")
+  .option(
+    "-p, --pretty-print",
+    "Pretty print the JSON output instead of minifying it"
+  )
+  .option(
+    "-j, --json-errors",
+    "Instead of printing errors, output them as JSON"
+  )
   .description("Tries to parse a file and outputs JSON")
-  .action((fileName) => route(workoutController.parse)(fileName, stdin));
+  .action((fileName, options) =>
+    route(workoutController.parse)(options, fileName, stdin)
+  );
 
 workout
   .command("list")

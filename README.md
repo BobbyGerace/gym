@@ -9,10 +9,10 @@
 
 ## TODO
 
-- e1rm calculator (& nvim function)
 - after save flow
 - Better error handling in `parse`
 - wrap nvim stuff in plugin
 - fill out readmes
+- PR picker for nvim
 - maybe split out parser
 - maybe underline errors
