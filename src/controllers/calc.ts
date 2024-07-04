@@ -52,14 +52,21 @@ export class CalcController {
 
     if (!toReps) {
       const repsToSubtract = toRpe ? 10 - toRpe : 0;
-      console.log(
-        Math.floor(formulaGroup.reps(max, toWeight) - repsToSubtract)
+      const result = Math.floor(
+        formulaGroup.reps(max, toWeight) - repsToSubtract
       );
+      console.log(`x${Math.max(0, result)}`);
     } else if (!toWeight) {
-      console.log(this.round2(formulaGroup.weight(max, toReps)));
+      const result = this.round2(formulaGroup.weight(max, toReps));
+      console.log(Math.max(0, result).toString());
     } else if (!toRpe) {
       const possibleReps = formulaGroup.reps(max, toWeight) - toReps;
-      console.log(10 - Math.floor(2 * possibleReps) / 2);
+      const rpe = 10 - Math.floor(2 * possibleReps) / 2;
+      if (rpe > 10) {
+        console.log(`>@10`);
+      } else {
+        console.log(`@${rpe}`);
+      }
     } else {
       throw new Error("Cannot convert to a set with all values");
     }

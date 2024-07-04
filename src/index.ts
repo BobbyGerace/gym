@@ -5,6 +5,7 @@ import { getConfig } from "./lib/config";
 import { DbController } from "./controllers/db";
 import { WorkoutController } from "./controllers/workout";
 import { ExerciseController } from "./controllers/exercise";
+import { CalcController } from "./controllers/calc";
 
 const config = getConfig();
 const program = new Command();
@@ -105,6 +106,22 @@ workout
   .option("-n, --number", "Number of workouts to list")
   .description("Lists the file paths of most recent workouts")
   .action(route(workoutController.list));
+
+const calc = program.command("calc");
+const calcController = new CalcController(config);
+calc
+  .command("e1rm <setString>")
+  .description(
+    "Calculate the estimated 1RM for a given set. Use the same syntax as in a workout file. e.g., 100x5@8"
+  )
+  .action(route(calcController.e1rm));
+
+calc
+  .command("convert <fromSet> <toSet>")
+  .description(
+    "Using the e1rm from the fromSet, find expected weight, reps, or rpe of the toSet. It will calculate the missing parameter. For example, 185x8@8 x6@8 will output 198.7"
+  )
+  .action(route(calcController.convertRpe));
 
 if (process.stdin.isTTY) {
   program.parse(process.argv);

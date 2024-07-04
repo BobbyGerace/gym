@@ -9,5 +9,5 @@ export const epleyFormulas = {
   max: (weight: number, reps: number) =>
     reps === 1 ? weight : weight * (1 + reps / 30),
   weight: (max: number, reps: number) => max / (1 + reps / 30),
-  reps: (max: number, weight: number) => 30 * (weight / max - 1),
+  reps: (max: number, weight: number) => 30 * (max / weight - 1),
 };
