@@ -64,6 +64,7 @@ const formatError = (error: ParseError): string => {
   return `Parse error ${error.line}:${error.col}: ${error.message}`;
 };
 
+// TODO: Replace all usages of this with better error handling
 export const parseOrThrow = (workout: string): Workout => {
   const { result, errors } = parse(workout);
   if (errors.length > 0) {

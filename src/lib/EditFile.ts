@@ -1,23 +1,34 @@
 import { Database } from "../lib/database";
-import { ParseError, parse, parseOrThrow } from "../lib/parser";
+import { ParseError, Workout, parse } from "../lib/parser";
 import { PersistWorkout } from "../lib/persistWorkout";
-import { multiPrompt, yNPrompt } from "../lib/prompt";
+import { multiPrompt } from "../lib/prompt";
 import fs from "fs";
 import path from "path";
 import { logger } from "../lib/logger";
 import { Config } from "./config";
 import { spawn } from "child_process";
 import { formatErrorMessage } from "./formatErrorMessage";
+import { Exercise } from "./exercise";
 
+// TODO: Don't offer option to delete unless its a new file
 export class EditFile {
   private db: Database;
   private config: Config;
+  private fileName: string;
   private filePath: string;
+  private canDelete: boolean;
 
-  constructor(filePath: string, db: Database, config: Config) {
-    this.filePath = filePath;
+  constructor(
+    fileName: string,
+    db: Database,
+    config: Config,
+    canDelete = false
+  ) {
     this.config = config;
     this.db = db;
+    this.fileName = fileName;
+    this.filePath = path.join(this.config.workoutDir, fileName);
+    this.canDelete = canDelete;
   }
 
   async begin() {
@@ -35,40 +46,93 @@ export class EditFile {
       } else throw e;
     }
 
-    this.afterSaveFlow(this.filePath, this.db);
-  }
-
-  // TODO: finish this
-  // print new exercises to be created
-  // ask to (e)dit, (d)elete, (c)ancel, or (s)ave[, commit[, and push]] depending on config and presence of git
-  // print new PRs for existing exercises
-  private async afterSaveFlow(fileName: string, db: Database) {
-    const persist = new PersistWorkout(db, this.config);
-    const fileContents = fs.readFileSync(fileName, "utf-8");
+    const fileContents = fs.readFileSync(this.filePath, "utf-8");
     const { result, errors } = parse(fileContents);
-
-    if (errors) {
+    if (errors.length) {
       this.printErrors(errors, fileContents);
       return this.promptToHandleErrors(errors);
     }
 
+    await this.showNewExercises(result);
+    await this.nextActionPrompt(result);
+  }
+
+  private async saveWorkout(ast: Workout) {
+    const persist = new PersistWorkout(this.db, this.config);
+
     try {
-      await persist.saveWorkout(fileName, result);
-      logger.log(`Saved ${fileName} to database.`);
+      await persist.saveWorkout(this.fileName, ast);
+      logger.log(`Saved ${this.fileName} to database.`);
     } catch (e) {
       if (e instanceof Error)
-        throw new Error(`Problem saving file ${fileName}: ${e.message}`);
+        throw new Error(`Problem saving file ${this.fileName}: ${e.message}`);
       else throw e;
     }
   }
 
   private async promptToHandleErrors(errors: ParseError[]) {
-    const message = `${errors.length} errors found. Would you like to (e)dit, (d)elete, or (c)ancel?`;
-    await multiPrompt(message, {
+    const actionMessages = ["(e)dit the file", "(c)ancel and quit"];
+
+    const actions: Record<string, () => Promise<void>> = {
       e: async () => this.begin(),
-      d: async () => this.deleteFile(),
       c: async () => process.exit(0),
-    });
+    };
+
+    if (this.canDelete) {
+      actionMessages.push("(d)elete the file");
+      actions.d = async () => this.deleteFile();
+    }
+
+    const message = `${
+      errors.length
+    } errors found. Would you like to:\n${actionMessages.join("\n")}?`;
+
+    await multiPrompt(message, actions);
+  }
+
+  private async nextActionPrompt(ast: Workout) {
+    const afterSaveGitAction = this.isGitRepo()
+      ? this.config.afterSaveGitAction
+      : "none";
+    let saveAction = "(s)ave to db";
+    if (afterSaveGitAction === "commit") {
+      saveAction += " and commit";
+    } else if (afterSaveGitAction === "commit-push") {
+      saveAction += ", commit, and push";
+    }
+
+    const actionMessages = ["(e)dit the file", saveAction, "(c)ancel and quit"];
+
+    const actions: Record<string, () => Promise<void>> = {
+      e: async () => this.begin(),
+      c: async () => process.exit(0),
+      s: async () => {
+        await this.saveWorkout(ast);
+        if (afterSaveGitAction === "commit") {
+          await this.gitCommitAndPush();
+        }
+      },
+    };
+
+    if (this.canDelete) {
+      actionMessages.push("(d)elete the file");
+      actions.d = async () => this.deleteFile();
+    }
+
+    const message = `Would you like to:\n${actionMessages.join("\n")}?`;
+
+    await multiPrompt(message, actions);
+  }
+
+  private async showNewExercises(result: Workout) {
+    const exercise = new Exercise(this.config, this.db);
+    const newExercises = result.exercises.filter(
+      (e) => !exercise.exerciseExists(e.name)
+    );
+    if (newExercises.length === 0) return;
+
+    logger.log("The following new exercises will be created:");
+    newExercises.forEach((e) => logger.log(`  ${e.name}`));
   }
 
   private async deleteFile() {
@@ -109,7 +173,11 @@ export class EditFile {
 
     try {
       await this.runCommand("git", ["add", this.config.workoutDir]);
-      await this.runCommand("git", ["commit", "-m", `Add ${this.filePath}`]);
+      await this.runCommand("git", [
+        "commit",
+        "-m",
+        `Add new workout: ${this.fileName}`,
+      ]);
       await this.runCommand("git", ["push"]);
     } catch {
       logger.error("Error committing and pushing to git.");
