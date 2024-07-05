@@ -16,13 +16,13 @@ describe("CalcController", () => {
     test("calculates the 1RM", async () => {
       const cc = new CalcController(testConfig);
       await cc.e1rm("185x3@8", {});
-      expect(consoleSpy).toHaveBeenCalledWith(208.13);
+      expect(consoleSpy).toHaveBeenCalledWith("208.13");
     });
 
     test("calculates the 1RM with a different formula", async () => {
       const cc = new CalcController(testConfig);
       await cc.e1rm("185x3@8", { formula: "epley" });
-      expect(consoleSpy).toHaveBeenCalledWith(215.83);
+      expect(consoleSpy).toHaveBeenCalledWith("215.83");
     });
   });
 

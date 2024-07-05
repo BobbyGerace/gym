@@ -4,6 +4,8 @@ import { Exercise } from "../lib/exercise";
 import { formatDate } from "../lib/util";
 import fs from "fs";
 import path from "path";
+import { logger } from "../lib/logger";
+import { toJson } from "../lib/toJson";
 
 export class ExerciseController {
   private config: Config;
@@ -61,7 +63,7 @@ export class ExerciseController {
       const rows = await db.query<{ name: string }>(
         "select name from exercise order by id asc;"
       );
-      console.log(rows.map((r) => r.name).join("\n"));
+      logger.log(rows.map((r) => r.name).join("\n"));
     });
   };
 
@@ -80,11 +82,11 @@ export class ExerciseController {
 
       if (options.locationsOnly) {
         history.forEach((h) =>
-          console.log(`${this.relativePath(h.fileName)}:${h.lineStart}`)
+          logger.log(`${this.relativePath(h.fileName)}:${h.lineStart}`)
         );
       } else {
         if (history.length === 0) {
-          console.log(`No history found for ${exName}`);
+          logger.log(`No history found for ${exName}`);
           return;
         }
         for (const h of history) {
@@ -105,7 +107,7 @@ export class ExerciseController {
             ? ""
             : "\n";
 
-          console.log(`${dateHeader}\n${sectionLines.join("\n")}${padding}`);
+          logger.log(`${dateHeader}\n${sectionLines.join("\n")}${padding}`);
         }
       }
     });
@@ -113,7 +115,10 @@ export class ExerciseController {
 
   // TODO: This only handles rep maxes. Eventually we should be able to handle
   // other exercise types (pace or distance PRs for endurance activies, etc)
-  prs = async (exName: string) => {
+  prs = async (
+    exName: string,
+    options: { json: boolean; prettyPrint: boolean; exact: boolean }
+  ) => {
     await Database.open(this.config.databaseFile, async (db) => {
       const exercise = new Exercise(this.config, db);
       const ex = await exercise.getExerciseByName(exName);
@@ -121,9 +126,16 @@ export class ExerciseController {
         throw new Error(`Exercise not found: ${exName}`);
       }
 
-      const prs = await exercise.getRepMaxPrs(ex.id);
+      const prs = await exercise.getRepMaxPrs(ex.id, options.exact);
+
       const defaultWeightUnit =
         this.config.unitSystem === "metric" ? "kg" : "lb";
+
+      if (options.json) {
+        logger.log(toJson(prs, options.prettyPrint));
+        return;
+      }
+
       prs.forEach((pr) => {
         const unit = pr.weightUnit ?? defaultWeightUnit;
         const rm = `${pr.reps}RM: ${
@@ -134,7 +146,7 @@ export class ExerciseController {
             ? ""
             : `${unit === "bw" ? "BW" : pr.weight}x${pr.actualReps} on `;
 
-        console.log(
+        logger.log(
           `${rm} (${instance}${formatDate(pr.date, this.config.locale)})`
         );
       });

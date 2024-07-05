@@ -8,8 +8,7 @@ export type Config = {
   workoutDir: string;
   unitSystem: "imperial" | "metric";
   e1rmFormula: "brzycki" | "epley";
-  commitAfterChange: "prompt" | "always" | "never";
-  pushAfterCommit: boolean;
+  afterSaveGitAction: "commit" | "commit-push" | "none";
   locale: string;
 };
 
@@ -20,8 +19,7 @@ export const defaultConfig: Config = {
   workoutDir: "./workouts",
   unitSystem: "imperial",
   e1rmFormula: "brzycki",
-  commitAfterChange: "prompt",
-  pushAfterCommit: true,
+  afterSaveGitAction: "none",
   locale: "en-US",
 };
 

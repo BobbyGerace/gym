@@ -6,6 +6,7 @@ import { yNPrompt } from "../lib/prompt";
 import { PersistWorkout } from "../lib/persistWorkout";
 import { parseOrThrow } from "../lib/parser";
 import { findChangedFiles } from "../lib/findChangedFiles";
+import { logger } from "../lib/logger";
 
 export class DbController {
   config: Config;
@@ -19,22 +20,22 @@ export class DbController {
       fs.unlinkSync(filePath);
     }
 
-    console.log("Initializing database...");
+    logger.log("Initializing database...");
     await Database.initializeDatabase(filePath);
-    console.log("Syncing database...");
+    logger.log("Syncing database...");
     if (await this.sync({ yes: true })) {
-      console.log("Database successfully rebuilt.");
+      logger.log("Database successfully rebuilt.");
     }
   };
 
   init = async () => {
     if (fs.existsSync(this.config.databaseFile)) {
-      console.log(
+      logger.log(
         "Database already exists. Use 'gym db rebuild' to delete and recreate."
       );
     } else {
       await Database.initializeDatabase(this.config.databaseFile);
-      console.log("Database Initialized.");
+      logger.log("Database Initialized.");
     }
   };
 
@@ -43,7 +44,7 @@ export class DbController {
     silent?: boolean;
   }): Promise<boolean> => {
     const log: (s: string) => void =
-      options.silent && options.yes ? (s) => {} : (s) => console.log(s);
+      options.silent && options.yes ? (s) => {} : (s) => logger.log(s);
 
     return await Database.open(this.config.databaseFile, async (db) => {
       const { created, updated, deleted } = await findChangedFiles(

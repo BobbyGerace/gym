@@ -1,5 +1,6 @@
 import { brzyckiFormulas, epleyFormulas } from "../lib/calc";
 import { Config } from "../lib/config";
+import { logger } from "../lib/logger";
 import { Set, parseSet } from "../lib/parser";
 
 export class CalcController {
@@ -22,7 +23,7 @@ export class CalcController {
 
     const max = formulaGroup.max(this.extractWeight(weight), reps);
 
-    console.log(this.round2(max));
+    logger.log(this.round2(max).toString());
   };
 
   convertRpe = async (
@@ -53,17 +54,17 @@ export class CalcController {
       const result = Math.floor(
         formulaGroup.reps(max, toWeight) - repsToSubtract
       );
-      console.log(`x${Math.max(0, result)}`);
+      logger.log(`x${Math.max(0, result)}`);
     } else if (!toWeight) {
       const result = this.round2(formulaGroup.weight(max, toReps));
-      console.log(Math.max(0, result).toString());
+      logger.log(Math.max(0, result).toString());
     } else if (!toRpe) {
       const possibleReps = formulaGroup.reps(max, toWeight) - toReps;
       const rpe = 10 - Math.floor(2 * possibleReps) / 2;
       if (rpe > 10) {
-        console.log(`>@10`);
+        logger.log(`>@10`);
       } else {
-        console.log(`@${rpe}`);
+        logger.log(`@${rpe}`);
       }
     } else {
       throw new Error("Cannot convert to a set with all values");

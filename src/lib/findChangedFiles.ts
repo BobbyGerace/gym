@@ -3,6 +3,7 @@ import { Config } from "./config";
 import path from "path";
 import fs from "fs";
 import { yNPrompt } from "./prompt";
+import { logger } from "./logger";
 
 export const findChangedFiles = async (
   config: Config,
@@ -54,9 +55,9 @@ export const changedFilesPrompt = async (
   const { updated, deleted, created } = await findChangedFiles(config, db);
   if (created.length + updated.length + deleted.length === 0) return false;
 
-  console.log("The following unsaved changes were found");
-  console.log(`  ${created.length} files created`);
-  console.log(`  ${updated.length} files updated`);
-  console.log(`  ${deleted.length} files deleted`);
+  logger.log("The following unsaved changes were found");
+  logger.log(`  ${created.length} files created`);
+  logger.log(`  ${updated.length} files updated`);
+  logger.log(`  ${deleted.length} files deleted`);
   return await yNPrompt("Would you like to sync these files now?");
 };

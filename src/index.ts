@@ -6,14 +6,14 @@ import { DbController } from "./controllers/db";
 import { WorkoutController } from "./controllers/workout";
 import { ExerciseController } from "./controllers/exercise";
 import { CalcController } from "./controllers/calc";
-import chalk from "chalk";
+import { logger } from "./lib/logger";
 
 const config = getConfig();
 const program = new Command();
 
 program.version("1.0.0");
 
-const exercise = program.command("exercise");
+const exercise = program.command("exercise").alias("ex");
 
 // Handle errors better, and make the types play nice
 function route<T extends (...args: any) => any>(
@@ -23,7 +23,7 @@ function route<T extends (...args: any) => any>(
     try {
       await fn(...args);
     } catch (e) {
-      if (e instanceof Error) console.error(chalk.red("ERROR: " + e.message));
+      if (e instanceof Error) logger.error("ERROR: " + e.message);
       process.exit(1);
     }
   }) as any;
@@ -39,8 +39,19 @@ exercise
 
 exercise
   .command("prs <exerciseName>")
+  .option("-j, --json", "Print prs as JSON instead of a human readable format")
+  .option(
+    "-p, --pretty-print",
+    "Pretty print the JSON output instead of minifying it"
+  )
+  .option(
+    "-e, --exact",
+    "Only show PRs that exactly match the rep max. By default, it will show all PRs that are greater than or equal to the rep max."
+  )
   .description("Output PRs for the given exercise")
-  .action(route(exerciseController.prs));
+  .action((exerciseName, options) =>
+    route(exerciseController.prs)(exerciseName, options)
+  );
 
 exercise
   .command("history <exerciseName>")
@@ -71,7 +82,7 @@ db.command("sync")
   .option("-y", "--yes", "Automatically accept changes")
   .action(route(dbController.sync));
 
-const workout = program.command("workout");
+const workout = program.command("workout").alias("w");
 const workoutController = new WorkoutController(config);
 workout
   .command("save <fileNames...>")
@@ -118,7 +129,7 @@ workout
   .description("Lists the file paths of most recent workouts")
   .action(route(workoutController.list));
 
-const calc = program.command("calc");
+const calc = program.command("calc").alias("c");
 const calcController = new CalcController(config);
 calc
   .command("e1rm <setString>")

@@ -1,16 +1,16 @@
 import { Config } from "../lib/config";
 import { Database } from "../lib/database";
-import { parse, parseOrThrow } from "../lib/parser";
+import { ParseError, parse, parseOrThrow } from "../lib/parser";
 import { PersistWorkout } from "../lib/persistWorkout";
-import { yNPrompt } from "../lib/prompt";
-import { spawn } from "child_process";
 import { formatDate } from "../lib/util";
 import fs from "fs";
 import path from "path";
 import { DbController } from "./db";
 import { changedFilesPrompt } from "../lib/findChangedFiles";
 import { formatErrorMessage } from "../lib/formatErrorMessage";
-import chalk from "chalk";
+import { logger } from "../lib/logger";
+import { toJson } from "../lib/toJson";
+import { EditFile } from "../lib/EditFile";
 
 export class WorkoutController {
   private config: Config;
@@ -26,7 +26,7 @@ export class WorkoutController {
         return path.join(this.config.workoutDir, workout.fileName);
       });
 
-      console.log(workoutPaths.join("\n"));
+      logger.log(workoutPaths.join("\n"));
     });
   };
 
@@ -67,7 +67,7 @@ export class WorkoutController {
       const filePath = this.workoutPath(fileName);
       fs.writeFileSync(filePath, fileContents);
 
-      return this.openInEditor(filePath);
+      await new EditFile(filePath, db, this.config).begin();
     });
   };
 
@@ -88,7 +88,7 @@ export class WorkoutController {
       if (await changedFilesPrompt(this.config, db)) {
         await new DbController(this.config).sync({ yes: true });
       }
-      this.openInEditor(filePath);
+      await new EditFile(filePath, db, this.config).begin();
     });
   };
 
@@ -97,63 +97,30 @@ export class WorkoutController {
     fileName?: string,
     stdin?: string
   ) => {
-    const stringify = (obj: any) =>
-      options.prettyPrint ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
-
     const fileContents =
       (fileName ? fs.readFileSync(fileName, "utf-8") : stdin) ?? "";
 
     const { result, errors } = parse(fileContents);
 
     if (errors.length > 0 && options.jsonErrors) {
-      console.log(stringify(errors));
+      logger.log(toJson(errors, options.prettyPrint));
+      process.exit(1);
     } else if (errors.length > 0) {
-      console.error(
-        chalk.red(
-          errors.map((e) => formatErrorMessage(e, fileContents)).join("\n")
-        )
-      );
+      this.printErrors(errors, fileContents);
+      process.exit(1);
     } else {
-      console.log(stringify(result));
+      logger.log(toJson(result, options.prettyPrint));
     }
   };
-
-  private openInEditor(filePath: string) {
-    const editor = this.config.editor;
-    const editorArgs = this.config.editorArgs;
-    const args = [...editorArgs, filePath];
-
-    spawn(editor, args, { stdio: "inherit", env: { ...process.env } }).on(
-      "exit",
-      (code) => {
-        if (code === 0) {
-          this.afterSaveFlow(filePath);
-        } else {
-          console.error(
-            chalk.red(
-              `Editor exited with error code ${code}. Changes have not been saved to the database`
-            )
-          );
-        }
-      }
-    );
-  }
 
   private workoutPath(fileName = "") {
     return path.join(process.cwd(), this.config.workoutDir, fileName);
   }
 
-  private async afterSaveFlow(fileName: string) {
-    // TODO: finish this
-    // Check for errors
-    // print new exercises to be created
-    // print new PRs for existing exercises
-    // ask to (e)dit, (d)elete, or (s)ave[, commit[, and push]] depending on config and presence of git
-    const save = await yNPrompt("Save to database?");
-    if (save) {
-      await this.save([fileName]);
-      console.log(`Saved ${fileName} to database.`);
-    }
+  private printErrors(errors: ParseError[], fileContents: string) {
+    logger.error(
+      errors.map((e) => formatErrorMessage(e, fileContents)).join("\n")
+    );
   }
 
   // Formats the filename and handles duplicates
