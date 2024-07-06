@@ -2,7 +2,7 @@ import { formatErrorMessage } from "./formatErrorMessage";
 import { ParseError } from "./parser";
 
 const fileContents = `---
-title: Upper Body
+name: Upper Body
 date: Fri Sep 22 2023
 deload: true
 ---

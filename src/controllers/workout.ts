@@ -58,7 +58,7 @@ export class WorkoutController {
       }
       const { template, date, name } = options;
       const workoutDate = date ?? dateToYMD(new Date());
-      const fileName = this.fileNameFromDateAndTitle(workoutDate, name);
+      const fileName = this.fileNameFromDateAndName(workoutDate, name);
 
       let fileContents = template ? getFileFromTemplate(template) : stdin;
 
@@ -125,19 +125,19 @@ export class WorkoutController {
   }
 
   // Formats the filename and handles duplicates
-  private fileNameFromDateAndTitle(date: string, title = "") {
+  private fileNameFromDateAndName(date: string, name = "") {
     if (!date.match(/^(\d{4})-(\d{2})-(\d{2})$/))
       throw new Error("Expected date in YYYY-MM-DD format, but got " + date);
 
     let parts = [date];
-    if (title) {
-      let normalizedTitle = title
+    if (name) {
+      let normalizedName = name
         .replace(/[\W_]/g, " ")
         .trim()
         .replace(/\s+/g, "-")
         .toLowerCase()
         .substring(0, 241); // To keep the file name < 255 char
-      parts.push(normalizedTitle);
+      parts.push(normalizedName);
     }
 
     let fileName = parts.join("-") + ".gym";
@@ -164,18 +164,18 @@ const getFileFromTemplate = (templatePath: string): string => {
   return fs.readFileSync(templatePath, "utf-8");
 };
 
-const setFrontMatter = (fileContents: string, date: string, title?: string) => {
-  const titleLine = title ? `title: ${title}\n` : "";
+const setFrontMatter = (fileContents: string, date: string, name?: string) => {
+  const nameLine = name ? `name: ${name}\n` : "";
   const dateLine = `date: ${formatDate(date)}\n`;
   let result = fileContents;
 
   // Delete the lines if they already exist, so we can re-add them without dups
   result = fileContents.replace(/^\s*date\s*:.*$/gm, "");
-  if (title) {
-    result = fileContents.replace(/^\s*title\s*:.*$/gm, "");
+  if (name) {
+    result = fileContents.replace(/^\s*name\s*:.*$/gm, "");
   }
 
-  return insertIntoFrontMatter(result, titleLine + dateLine);
+  return insertIntoFrontMatter(result, nameLine + dateLine);
 };
 
 // Assumes the lines end with \n

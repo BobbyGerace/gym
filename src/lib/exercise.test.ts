@@ -18,6 +18,7 @@ const workouts = `315x10,8,6
 275x8
 405x3,2,2
 500x1
+550 // Make sure this doesn't get picked up
 455x1`
   .split("\n")
   .map((set) => `# Deadlift\n${set}`);

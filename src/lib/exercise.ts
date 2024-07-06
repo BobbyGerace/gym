@@ -74,7 +74,11 @@ export class Exercise {
           inner join exercise_instance ei on ei.id = s.exercise_instance_id
           inner join exercise e on e.id = ei.exercise_id
           inner join workout w on w.id = ei.workout_id
-        where e.id = ? and s.reps ${comparator} ${i} and weight is not null
+        where 
+          e.id = ? 
+          and s.reps is not null
+          and s.reps ${comparator} ${i} 
+          and weight is not null
         order by s.weight_value * case 
           when coalesce(weight_unit, '${defaultWeightUnit}') = 'lb'
           then 0.453592

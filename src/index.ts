@@ -93,7 +93,7 @@ workout
   .command("new")
   .option("-t, --template <templateFile>", "Create from a template")
   .option("-d, --date <date>", "Specify a date (YYYY-MM-DD)")
-  .option("-n, --name <name>", "Specify a title for the workout")
+  .option("-n, --name <name>", "Specify a name for the workout")
   .description("Create a new file and save it to the database")
   .action((options) => route(workoutController.new)(options, stdin));
 

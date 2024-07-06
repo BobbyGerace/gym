@@ -12,7 +12,7 @@ const newState = (a: string) => a;
 
 describe("parseWorkout", () => {
   const happyPath = newState(`---
-  title: Hello world
+  name: Hello world
   date: 2020-01-01
   ---
 
@@ -30,7 +30,7 @@ describe("parseWorkout", () => {
   test("parseWorkout should parse document", () => {
     expect(parseWorkout(happyPath)).toEqual({
       frontMatter: {
-        title: "Hello world",
+        name: "Hello world",
         date: "2020-01-01",
       },
       exercises: [
@@ -147,14 +147,14 @@ describe("parseWorkout", () => {
   });
 
   const withoutExercises = newState(`---
-  title: Hello world
+  name: Hello world
   date: 2020-01-01
   ---
   `);
   test("parseWorkout should parse document without exercises", () => {
     expect(parseWorkout(withoutExercises)).toEqual({
       frontMatter: {
-        title: "Hello world",
+        name: "Hello world",
         date: "2020-01-01",
       },
       exercises: [],
@@ -172,7 +172,7 @@ describe("parseWorkout", () => {
   const withCommentsAndWhitespace = newState(`
   // hello
   --- // is anybody out there?
-  title: Hello world
+  name: Hello world
    
   // comments can go anywhere
 
@@ -199,7 +199,7 @@ describe("parseWorkout", () => {
     const result = parseWorkout(withCommentsAndWhitespace);
     expect(result).toEqual({
       frontMatter: {
-        title: "Hello world",
+        name: "Hello world",
         date: "2020-01-01",
       },
       exercises: [
