@@ -4,7 +4,7 @@ import { Database } from "./database";
 const MAX_REPS_FOR_PRS = 12;
 
 type ExerciseRow = { id: number; name: string };
-type RepMax = {
+export type RepMax = {
   reps: number;
   actualReps: number;
   date: string;
@@ -79,7 +79,7 @@ export class Exercise {
           when coalesce(weight_unit, '${defaultWeightUnit}') = 'lb'
           then 0.453592
           else 1
-        end desc, s.reps asc, w.workout_date desc
+        end desc, s.reps asc, w.workout_date asc
         limit 1
       `,
           [exId]

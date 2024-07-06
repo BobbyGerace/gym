@@ -67,7 +67,7 @@ export class WorkoutController {
       const filePath = this.workoutPath(fileName);
       fs.writeFileSync(filePath, fileContents);
 
-      await new EditFile(filePath, db, this.config).begin();
+      await new EditFile(filePath, db, this.config, true).begin();
     });
   };
 
@@ -78,7 +78,8 @@ export class WorkoutController {
         if (options.deleteFile && fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
-        await new PersistWorkout(db, this.config).deleteWorkout(filePath);
+        const fileName = path.basename(filePath);
+        await new PersistWorkout(db, this.config).deleteWorkout(fileName);
       }
     });
   };
@@ -88,7 +89,7 @@ export class WorkoutController {
       if (await changedFilesPrompt(this.config, db)) {
         await new DbController(this.config).sync({ yes: true });
       }
-      await new EditFile(filePath, db, this.config).begin();
+      await new EditFile(filePath, db, this.config, false).begin();
     });
   };
 
@@ -156,7 +157,7 @@ const leftPad02 = (str: string): string =>
 const dateToYMD = (date: Date) => {
   return `${date.getFullYear()}-${leftPad02(
     (date.getMonth() + 1).toString()
-  )}-${date.getDate()}`;
+  )}-${leftPad02(date.getDate().toString())}`;
 };
 
 const getFileFromTemplate = (templatePath: string): string => {

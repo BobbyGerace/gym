@@ -9,8 +9,8 @@
 
 ## TODO
 
-- after save flow
-- Better error handling in `parse`
+- Workout file list
+- Handle no reps bug for prs
 - wrap nvim stuff in plugin
 - fill out readmes
 - PR picker for nvim

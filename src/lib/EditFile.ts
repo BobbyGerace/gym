@@ -8,9 +8,11 @@ import { logger } from "../lib/logger";
 import { Config } from "./config";
 import { spawn } from "child_process";
 import { formatErrorMessage } from "./formatErrorMessage";
-import { Exercise } from "./exercise";
+import { Exercise, RepMax } from "./exercise";
+import chalk from "chalk";
 
-// TODO: Don't offer option to delete unless its a new file
+const DIVIDER = chalk.cyan("───────────────────────────────────────────");
+
 export class EditFile {
   private db: Database;
   private config: Config;
@@ -19,16 +21,16 @@ export class EditFile {
   private canDelete: boolean;
 
   constructor(
-    fileName: string,
+    filePath: string,
     db: Database,
     config: Config,
     canDelete = false
   ) {
     this.config = config;
     this.db = db;
-    this.fileName = fileName;
-    this.filePath = path.join(this.config.workoutDir, fileName);
+    this.filePath = filePath;
     this.canDelete = canDelete;
+    this.fileName = path.basename(filePath);
   }
 
   async begin() {
@@ -37,7 +39,7 @@ export class EditFile {
     const args = [...editorArgs, this.filePath];
 
     try {
-      this.runCommand(editor, args);
+      await this.runCommand(editor, args);
     } catch (e) {
       if (e instanceof Error) {
         throw new Error(
@@ -53,6 +55,10 @@ export class EditFile {
       return this.promptToHandleErrors(errors);
     }
 
+    logger.log(DIVIDER);
+    logger.log(chalk.yellow("          🎉 Workout Complete! 🎉"));
+    logger.log(DIVIDER + "\n");
+
     await this.showNewExercises(result);
     await this.nextActionPrompt(result);
   }
@@ -61,8 +67,9 @@ export class EditFile {
     const persist = new PersistWorkout(this.db, this.config);
 
     try {
-      await persist.saveWorkout(this.fileName, ast);
+      const workoutId = await persist.saveWorkout(this.fileName, ast);
       logger.log(`Saved ${this.fileName} to database.`);
+      return workoutId;
     } catch (e) {
       if (e instanceof Error)
         throw new Error(`Problem saving file ${this.fileName}: ${e.message}`);
@@ -71,7 +78,10 @@ export class EditFile {
   }
 
   private async promptToHandleErrors(errors: ParseError[]) {
-    const actionMessages = ["(e)dit the file", "(c)ancel and quit"];
+    const actionMessages = [
+      `${chalk.cyan("(e)")} ✏️  Edit the file`,
+      `${chalk.cyan("(c)")} ❌ Cancel and quit`,
+    ];
 
     const actions: Record<string, () => Promise<void>> = {
       e: async () => this.begin(),
@@ -79,60 +89,73 @@ export class EditFile {
     };
 
     if (this.canDelete) {
-      actionMessages.push("(d)elete the file");
+      actionMessages.push(`${chalk.cyan("(d)")} 🗑️ Delete the file`);
       actions.d = async () => this.deleteFile();
     }
 
+    const errorWord = errors.length === 1 ? "error" : "errors";
     const message = `${
       errors.length
-    } errors found. Would you like to:\n${actionMessages.join("\n")}?`;
+    } ${errorWord} found. Would you like to:\n${actionMessages.join(
+      "\n"
+    )}?\n\n`;
 
     await multiPrompt(message, actions);
+    logger.log("\n");
   }
 
   private async nextActionPrompt(ast: Workout) {
     const afterSaveGitAction = this.isGitRepo()
       ? this.config.afterSaveGitAction
       : "none";
-    let saveAction = "(s)ave to db";
+    let saveAction = `${chalk.cyan("(s)")} 💾 Save to db`;
     if (afterSaveGitAction === "commit") {
       saveAction += " and commit";
     } else if (afterSaveGitAction === "commit-push") {
       saveAction += ", commit, and push";
     }
 
-    const actionMessages = ["(e)dit the file", saveAction, "(c)ancel and quit"];
+    const actionMessages = [
+      `${chalk.cyan("(e)")} ✏️  Edit the file`,
+      saveAction,
+      `${chalk.cyan("(c)")} ❌ Cancel and quit`,
+    ];
 
     const actions: Record<string, () => Promise<void>> = {
       e: async () => this.begin(),
       c: async () => process.exit(0),
       s: async () => {
-        await this.saveWorkout(ast);
+        const workoutId = await this.saveWorkout(ast);
         if (afterSaveGitAction === "commit") {
           await this.gitCommitAndPush();
         }
+
+        await this.printPrs(ast, workoutId);
       },
     };
 
     if (this.canDelete) {
-      actionMessages.push("(d)elete the file");
+      actionMessages.push(`${chalk.cyan("(d)")} 🗑️ Delete the file`);
       actions.d = async () => this.deleteFile();
     }
 
-    const message = `Would you like to:\n${actionMessages.join("\n")}?`;
+    const message = `Would you like to:\n${actionMessages.join("\n")}?\n\n`;
 
     await multiPrompt(message, actions);
+    logger.log("\n");
   }
 
   private async showNewExercises(result: Workout) {
     const exercise = new Exercise(this.config, this.db);
-    const newExercises = result.exercises.filter(
-      (e) => !exercise.exerciseExists(e.name)
+    const newExercises = await this.asyncFilter(
+      result.exercises,
+      async (e) => !(await exercise.exerciseExists(e.name))
     );
     if (newExercises.length === 0) return;
 
-    logger.log("The following new exercises will be created:");
-    newExercises.forEach((e) => logger.log(`  ${e.name}`));
+    logger.log(chalk.green("✨ The following new exercises will be created:"));
+    newExercises.forEach((e) => logger.log(`  - ${e.name}`));
+    logger.log("\n" + DIVIDER + "\n");
   }
 
   private async deleteFile() {
@@ -182,5 +205,42 @@ export class EditFile {
     } catch {
       logger.error("Error committing and pushing to git.");
     }
+  }
+
+  private async printPrs(ast: Workout, workoutId: number) {
+    const exercisesWithPrs: { exerciseName: string; prs: RepMax[] }[] = [];
+
+    const exercise = new Exercise(this.config, this.db);
+
+    for (const e of ast.exercises) {
+      const ex = await exercise.getExerciseByName(e.name);
+      if (ex === null) return;
+      const prs = await exercise.getRepMaxPrs(ex.id, true);
+      const newPrs = prs.filter((pr) => pr.workoutId === workoutId);
+      exercisesWithPrs.push({ exerciseName: ex.name, prs: newPrs });
+    }
+
+    if (exercisesWithPrs.length === 0) return;
+
+    logger.log(DIVIDER + "\n");
+    logger.log(chalk.yellow("🏋️ New Personal Records 🏋️"));
+    exercisesWithPrs.forEach((pr) => {
+      logger.log(chalk.magenta(`  ${pr.exerciseName}`));
+      pr.prs.forEach((pr) => {
+        logger.log(
+          `    🔥 ${pr.reps}RM: ${
+            pr.weightUnit === "bw" ? "Bodyweight" : pr.weight + pr.weightUnit
+          }`
+        );
+      });
+    });
+  }
+
+  private async asyncFilter<T>(
+    arr: T[],
+    predicate: (t: T) => Promise<boolean>
+  ) {
+    const results = await Promise.all(arr.map(predicate));
+    return arr.filter((_, i) => results[i]);
   }
 }
