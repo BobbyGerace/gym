@@ -79,8 +79,8 @@ export class EditFile {
 
   private async promptToHandleErrors(errors: ParseError[]) {
     const actionMessages = [
-      `${chalk.cyan("(e)")} ✏️  Edit the file`,
-      `${chalk.cyan("(c)")} ❌ Cancel and quit`,
+      `${chalk.cyan("(e)")} Edit the file`,
+      `${chalk.cyan("(c)")} Cancel and quit`,
     ];
 
     const actions: Record<string, () => Promise<void>> = {
@@ -89,7 +89,7 @@ export class EditFile {
     };
 
     if (this.canDelete) {
-      actionMessages.push(`${chalk.cyan("(d)")} 🗑️ Delete the file`);
+      actionMessages.push(`${chalk.cyan("(d)")} Delete the file`);
       actions.d = async () => this.deleteFile();
     }
 
@@ -108,7 +108,7 @@ export class EditFile {
     const afterSaveGitAction = this.isGitRepo()
       ? this.config.afterSaveGitAction
       : "none";
-    let saveAction = `${chalk.cyan("(s)")} 💾 Save to db`;
+    let saveAction = `${chalk.cyan("(s)")} Save to db`;
     if (afterSaveGitAction === "commit") {
       saveAction += " and commit";
     } else if (afterSaveGitAction === "commit-push") {
@@ -116,9 +116,9 @@ export class EditFile {
     }
 
     const actionMessages = [
-      `${chalk.cyan("(e)")} ✏️  Edit the file`,
+      `${chalk.cyan("(e)")} Edit the file`,
       saveAction,
-      `${chalk.cyan("(c)")} ❌ Cancel and quit`,
+      `${chalk.cyan("(c)")} Cancel and quit`,
     ];
 
     const actions: Record<string, () => Promise<void>> = {
@@ -135,7 +135,7 @@ export class EditFile {
     };
 
     if (this.canDelete) {
-      actionMessages.push(`${chalk.cyan("(d)")} 🗑️ Delete the file`);
+      actionMessages.push(`${chalk.cyan("(d)")} Delete the file`);
       actions.d = async () => this.deleteFile();
     }
 
@@ -228,7 +228,7 @@ export class EditFile {
       logger.log(chalk.magenta(`  ${pr.exerciseName}`));
       pr.prs.forEach((pr) => {
         logger.log(
-          `    🔥 ${pr.reps}RM: ${
+          `    ${pr.reps}RM: ${
             pr.weightUnit === "bw" ? "Bodyweight" : pr.weight + pr.weightUnit
           }`
         );

@@ -86,7 +86,7 @@ Gym uses a JSON config file to store settings. The config file will be automatic
 - `workoutDir`: (string) The directory where workout files are saved. Defaults to `workouts`.
 - `unitSystem`: ("imperial" | "metric") The unit system to use. Defaults to `imperial`.
 - `e1rmFormula`: ("brzycki" | "epley") The formula to use for calculating estimated one rep max. Defaults to `brzycki`.
-- `afterSaveGitAction`: ("commit" | "commit-push" | "none") The action to take after saving a workout. Defaults to `none`.;
+- `afterSaveGitAction`: ("commit" | "commit-push" | "none") The action to take after saving a workout. Defaults to `none`.
 - `locale`: (string) The locale to use for date formatting. Defaults to `en-US`.
 
 ### Database Management
