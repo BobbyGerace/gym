@@ -28,17 +28,6 @@ export class DbController {
     }
   };
 
-  init = async () => {
-    if (fs.existsSync(this.config.databaseFile)) {
-      logger.log(
-        "Database already exists. Use 'gym db rebuild' to delete and recreate."
-      );
-    } else {
-      await Database.initializeDatabase(this.config.databaseFile);
-      logger.log("Database Initialized.");
-    }
-  };
-
   sync = async (options: {
     yes?: boolean;
     silent?: boolean;

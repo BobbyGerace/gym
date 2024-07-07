@@ -7,13 +7,12 @@ import { WorkoutController } from "./controllers/workout";
 import { ExerciseController } from "./controllers/exercise";
 import { CalcController } from "./controllers/calc";
 import { logger } from "./lib/logger";
+import { InitController } from "./controllers/init";
 
 const config = getConfig();
 const program = new Command();
 
 program.version("1.0.0");
-
-const exercise = program.command("exercise").alias("ex");
 
 // Handle errors better, and make the types play nice
 function route<T extends (...args: any) => any>(
@@ -31,6 +30,13 @@ function route<T extends (...args: any) => any>(
 
 let stdin = "";
 
+const initController = new InitController(config);
+program
+  .command("init")
+  .description("Initialize the database and config file.")
+  .action(route(initController.init));
+
+const exercise = program.command("exercise").alias("ex");
 const exerciseController = new ExerciseController(config);
 exercise
   .command("list")
@@ -57,7 +63,7 @@ exercise
   .command("history <exerciseName>")
   .option("-n, --number <number>", "number of items to find")
   .option("-l, --locations-only", "Only print the file names and line numbers")
-  .description("Output file names and line numbers for a given exercise")
+  .description("List recent history for a given exercise")
   .action(route(exerciseController.history));
 
 exercise
@@ -73,10 +79,6 @@ db.command("rebuild")
   .description("Delete, reinitialize, and sync the database")
   .action(route(dbController.rebuild));
 
-db.command("init")
-  .description("Initialize the database")
-  .action(route(dbController.init));
-
 db.command("sync")
   .description("Parse all workouts and bring the database up to date")
   .option("-y", "--yes", "Automatically accept changes")
@@ -86,7 +88,7 @@ const workout = program.command("workout").alias("w");
 const workoutController = new WorkoutController(config);
 workout
   .command("save <fileNames...>")
-  .description("Parse the workout and save it to the database")
+  .description("Parse the workout(s) and save to the database")
   .action(route(workoutController.save));
 
 workout
@@ -94,7 +96,9 @@ workout
   .option("-t, --template <templateFile>", "Create from a template")
   .option("-d, --date <date>", "Specify a date (YYYY-MM-DD)")
   .option("-n, --name <name>", "Specify a name for the workout")
-  .description("Create a new file and save it to the database")
+  .description(
+    "Interactive command that creates a new file and opens it in an editor. Upon saving, parses the file and optionally saves to the database. Can also read the file contents from stdin."
+  )
   .action((options) => route(workoutController.new)(options, stdin));
 
 workout
@@ -109,6 +113,22 @@ workout
   .action(route(workoutController.rm));
 
 workout
+  .command("history")
+  .option("-n, --number <number>", "Number of workouts to list")
+  .option("-N, --name <name>", "Only show workouts matching the name")
+  .option("-f, --file-name-only", "Only show the file names")
+  .option(
+    "-p, --pretty-print",
+    "Pretty print the JSON output instead of minifying it"
+  )
+  .option(
+    "-j, --json",
+    "Print workout history as JSON instead of a human readable format"
+  )
+  .description("List the recent history of workouts in the databases")
+  .action(route(workoutController.history));
+
+workout
   .command("parse <fileName>")
   .option(
     "-p, --pretty-print",
@@ -118,16 +138,12 @@ workout
     "-j, --json-errors",
     "Instead of printing errors, output them as JSON"
   )
-  .description("Tries to parse a file and outputs JSON")
+  .description(
+    "Tries to parse a file and outputs JSON. Can also read workout from stdin"
+  )
   .action((fileName, options) =>
     route(workoutController.parse)(options, fileName, stdin)
   );
-
-workout
-  .command("list")
-  .option("-n, --number", "Number of workouts to list")
-  .description("Lists the file paths of most recent workouts")
-  .action(route(workoutController.list));
 
 const calc = program.command("calc").alias("c");
 const calcController = new CalcController(config);

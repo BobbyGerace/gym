@@ -44,13 +44,34 @@ describe("WorkoutController", () => {
     mockFs.restore();
   });
 
-  describe("list", () => {
+  describe("history", () => {
+    const output = `workouts/2023-09-26.gym
+---
+hello: world
+---
+
+workouts/2023-09-24.gym
+---
+hello: world
+---
+`;
+
     test("lists the workouts", async () => {
       await Database.initializeDatabase(":memory:", async (db) => {
         const consoleSpy = jest.spyOn(console, "log").mockImplementation();
         const wc = new WorkoutController(testConfig);
         await wc.save(["workouts/2023-09-24.gym", "workouts/2023-09-26.gym"]);
-        await wc.list({ number: 10 });
+        await wc.history({ number: "10" });
+        expect(consoleSpy).toHaveBeenCalledWith(output);
+      });
+    });
+
+    test("lists the workouts -- file names only", async () => {
+      await Database.initializeDatabase(":memory:", async (db) => {
+        const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+        const wc = new WorkoutController(testConfig);
+        await wc.save(["workouts/2023-09-24.gym", "workouts/2023-09-26.gym"]);
+        await wc.history({ number: "10", fileNameOnly: true });
         expect(consoleSpy).toHaveBeenCalledWith(
           "workouts/2023-09-26.gym\nworkouts/2023-09-24.gym"
         );

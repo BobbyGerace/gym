@@ -102,7 +102,10 @@ export class ExerciseController {
             .split("\n")
             .slice(h.lineStart - 1, h.lineEnd);
 
-          const dateHeader = `--- ${formatDate(h.date)} ---`;
+          const dateHeader = `--- ${formatDate(
+            h.date,
+            this.config.locale
+          )} ---`;
           const padding = sectionLines[sectionLines.length - 1]?.match(/^\s*$/)
             ? ""
             : "\n";

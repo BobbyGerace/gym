@@ -18,15 +18,45 @@ export class WorkoutController {
     this.config = config;
   }
 
-  list = async (options: { number: number }) => {
+  history = async (options: {
+    number?: string;
+    name?: string;
+    fileNameOnly?: boolean;
+    json?: boolean;
+    prettyPrint?: boolean;
+  }) => {
     await Database.open(this.config.databaseFile, async (db) => {
       const persist = new PersistWorkout(db, this.config);
-      const workouts = await persist.listWorkouts(options.number);
-      const workoutPaths = workouts.map((workout) => {
-        return path.join(this.config.workoutDir, workout.fileName);
+      const number = options.number ? parseInt(options.number) : undefined;
+      if (number && isNaN(number)) {
+        throw new Error("Number is invalid");
+      }
+
+      const workouts = await persist.listWorkouts(number);
+      const workoutsWithFullPath = workouts.map((workout) => {
+        return {
+          ...workout,
+          fileName: path.join(this.config.workoutDir, workout.fileName),
+        };
       });
 
-      logger.log(workoutPaths.join("\n"));
+      const filteredWorkouts = options.name
+        ? workoutsWithFullPath.filter(
+            (workout) => workout.frontMatter.name === options.name
+          )
+        : workoutsWithFullPath;
+
+      if (options.json) {
+        logger.log(toJson(filteredWorkouts, options.prettyPrint));
+      } else if (options.fileNameOnly) {
+        logger.log(filteredWorkouts.map((w) => w.fileName).join("\n"));
+      } else {
+        logger.log(
+          filteredWorkouts
+            .map((w) => `${w.fileName}\n${formatFrontMatter(w.frontMatter)}\n`)
+            .join("\n")
+        );
+      }
     });
   };
 
@@ -62,9 +92,12 @@ export class WorkoutController {
 
       let fileContents = template ? getFileFromTemplate(template) : stdin;
 
-      fileContents = setFrontMatter(fileContents, workoutDate, name);
+      fileContents = this.setFrontMatter(fileContents, workoutDate, name);
 
       const filePath = this.workoutPath(fileName);
+      if (!fs.existsSync(this.config.workoutDir)) {
+        fs.mkdirSync(this.config.workoutDir, { recursive: true });
+      }
       fs.writeFileSync(filePath, fileContents);
 
       await new EditFile(filePath, db, this.config, true).begin();
@@ -149,6 +182,20 @@ export class WorkoutController {
 
     return fileName;
   }
+
+  private setFrontMatter(fileContents: string, date: string, name?: string) {
+    const nameLine = name ? `name: ${name}\n` : "";
+    const dateLine = `date: ${formatDate(date, this.config.locale)}\n`;
+    let result = fileContents;
+
+    // Delete the lines if they already exist, so we can re-add them without dups
+    result = fileContents.replace(/^\s*date\s*:.*$/gm, "");
+    if (name) {
+      result = fileContents.replace(/^\s*name\s*:.*$/gm, "");
+    }
+
+    return insertIntoFrontMatter(result, nameLine + dateLine);
+  }
 }
 
 const leftPad02 = (str: string): string =>
@@ -162,20 +209,6 @@ const dateToYMD = (date: Date) => {
 
 const getFileFromTemplate = (templatePath: string): string => {
   return fs.readFileSync(templatePath, "utf-8");
-};
-
-const setFrontMatter = (fileContents: string, date: string, name?: string) => {
-  const nameLine = name ? `name: ${name}\n` : "";
-  const dateLine = `date: ${formatDate(date)}\n`;
-  let result = fileContents;
-
-  // Delete the lines if they already exist, so we can re-add them without dups
-  result = fileContents.replace(/^\s*date\s*:.*$/gm, "");
-  if (name) {
-    result = fileContents.replace(/^\s*name\s*:.*$/gm, "");
-  }
-
-  return insertIntoFrontMatter(result, nameLine + dateLine);
 };
 
 // Assumes the lines end with \n
@@ -192,4 +225,13 @@ const insertIntoFrontMatter = (fileContents: string, lines: string) => {
   }
 
   return "---\n" + lines + "---\n\n" + fileContents;
+};
+
+const formatFrontMatter = (
+  frontMatter: Record<string, boolean | number | string>
+) => {
+  const lines = Object.entries(frontMatter).map(
+    ([key, value]) => `${key}: ${value}`
+  );
+  return `---\n${lines.join("\n")}\n---`;
 };

@@ -1,4 +1,4 @@
-export const formatDate = (yyyy_mm_dd: string, locale = "en-US"): string => {
+export const formatDate = (yyyy_mm_dd: string, locale: string): string => {
   let [year, month, day] = yyyy_mm_dd.split("-").map(Number);
 
   let date = new Date(year, month - 1, day);

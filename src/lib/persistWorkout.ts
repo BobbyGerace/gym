@@ -5,6 +5,11 @@ import path from "path";
 
 type ExerciseWithId = Exercise & { id: number };
 type FlatSet = Omit<Set, "reps" | "sets"> & { reps?: number };
+type WorkoutHistoryItem = {
+  fileName: string;
+  date: string;
+  frontMatter: Record<string, string | boolean | number>;
+};
 
 export class PersistWorkout {
   private db: Database;
@@ -168,12 +173,21 @@ export class PersistWorkout {
     return rows.map((row) => row.id);
   }
 
-  async listWorkouts(
-    num: number
-  ): Promise<{ fileName: string; date: string }[]> {
-    return this.db.query<{ fileName: string; date: string }>(
-      `SELECT file_name as fileName, workout_date as date FROM workout ORDER BY workout_date DESC LIMIT ${num};`
+  async listWorkouts(num?: number): Promise<WorkoutHistoryItem[]> {
+    const limit = num ? `LIMIT ${num}` : "";
+    const result = await this.db.query<
+      WorkoutHistoryItem & { frontMatter: string }
+    >(
+      `SELECT file_name as fileName, workout_date as date, front_matter as frontMatter FROM workout ORDER BY workout_date DESC ${limit};`
     );
+
+    return result.map((row) => {
+      return {
+        fileName: row.fileName,
+        date: row.date,
+        frontMatter: JSON.parse(row.frontMatter ?? "{}"),
+      };
+    });
   }
 
   async deleteWorkout(fileName: string): Promise<void> {
