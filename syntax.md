@@ -20,6 +20,8 @@ deload: true
 ---
 ```
 
+Front matter keys are arbitrary and are for your own use. The only special key is `name`, which may be used by `gym workout history` to filter workouts to a specific name.
+
 ## Exercises
 
 Exercises are defined by a line starting with a `#` followed by the exercise name. The exercise name is case-insensitive and may contain spaces. Below the exercise is a list of sets.
@@ -94,8 +96,6 @@ If the key does not have a value, it will be assumed to be `true`.
 
 Multiple tags may be logged by separating them with commas.
 
-Examples:
-
 ```
 # Bench Press with Chains
 225x5 @8 { chains: 40 }
@@ -113,21 +113,19 @@ You may indicate that a set is repeated by adding a number followed by `sets`. T
 
 Keep in mind that repeating sets can stack with repeating reps syntax.
 
-Examples:
-
 ```
 // This
-225x5,4,3 3 sets
+225x1,2,3 3 sets
 
 // is equivalent to
-225x5
-225x4
+225x1
+225x2
 225x3
-225x5
-225x4
+225x1
+225x2
 225x3
-225x5
-225x4
+225x1
+225x2
 225x3
 
 // Sometimes you may want to log a set with no other elements
