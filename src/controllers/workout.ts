@@ -32,7 +32,7 @@ export class WorkoutController {
         throw new Error("Number is invalid");
       }
 
-      const workouts = await persist.listWorkouts(number);
+      const workouts = await persist.listWorkouts(number, options.name);
       const workoutsWithFullPath = workouts.map((workout) => {
         return {
           ...workout,
@@ -40,19 +40,13 @@ export class WorkoutController {
         };
       });
 
-      const filteredWorkouts = options.name
-        ? workoutsWithFullPath.filter(
-            (workout) => workout.frontMatter.name === options.name
-          )
-        : workoutsWithFullPath;
-
       if (options.json) {
-        logger.log(toJson(filteredWorkouts, options.prettyPrint));
+        logger.log(toJson(workoutsWithFullPath, options.prettyPrint));
       } else if (options.fileNameOnly) {
-        logger.log(filteredWorkouts.map((w) => w.fileName).join("\n"));
+        logger.log(workoutsWithFullPath.map((w) => w.fileName).join("\n"));
       } else {
         logger.log(
-          filteredWorkouts
+          workoutsWithFullPath
             .map((w) => `${w.fileName}\n${formatFrontMatter(w.frontMatter)}\n`)
             .join("\n")
         );

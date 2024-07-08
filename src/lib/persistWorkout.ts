@@ -173,12 +173,24 @@ export class PersistWorkout {
     return rows.map((row) => row.id);
   }
 
-  async listWorkouts(num?: number): Promise<WorkoutHistoryItem[]> {
+  async listWorkouts(
+    num?: number,
+    name?: string
+  ): Promise<WorkoutHistoryItem[]> {
     const limit = num ? `LIMIT ${num}` : "";
+    // get only rows where front_matter.name = name
+    const whereClause = name ? `WHERE front_matter->>'name' = ?` : "";
     const result = await this.db.query<
       WorkoutHistoryItem & { frontMatter: string }
     >(
-      `SELECT file_name as fileName, workout_date as date, front_matter as frontMatter FROM workout ORDER BY workout_date DESC ${limit};`
+      `SELECT
+         file_name as fileName,
+         workout_date as date,
+         front_matter as frontMatter
+       FROM workout 
+       ${whereClause}
+       ORDER BY workout_date DESC ${limit};`,
+      name ? [name] : []
     );
 
     return result.map((row) => {
