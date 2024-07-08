@@ -102,7 +102,7 @@ describe("SetParser", () => {
   });
 
   const terms =
-    `100 x2,3,4,5 @10 1:30:00 100m 3sets {chains:123,another}`.split(" ");
+    `100 x2,3,4,5 @10 1:05:00 100m 3sets {chains:123,another}`.split(" ");
   const permutations = (terms: string[]): string[][] => {
     if (terms.length === 1) {
       return [terms];
@@ -128,7 +128,7 @@ describe("SetParser", () => {
         reps: [2, 3, 4, 5],
         rpe: 10,
         sets: 3,
-        time: { hours: 1, minutes: 30, seconds: 0 },
+        time: { hours: 1, minutes: 5, seconds: 0 },
         distance: { value: 100, unit: "m" },
         tags: [{ key: "chains", value: 123 }, { key: "another" }],
       });
