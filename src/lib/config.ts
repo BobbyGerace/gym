@@ -14,7 +14,7 @@ export type Config = {
 
 export const defaultConfig: Config = {
   databaseFile: "./.gym.db",
-  editor: "vim",
+  editor: "nvim",
   editorArgs: [],
   workoutDir: "./workouts",
   unitSystem: "imperial",
