@@ -17,7 +17,7 @@ Gym is a command line tool for logging workouts. It uses a simple DSL to define 
 
 ### Getting Started
 
-Create a new directory for your project and cd into it. Run `gym init` to create a new gym project.
+Create a new directory for your project and cd into it. Run `gym init` to create a new gym project. This will create a new SQLite database file and a config file in the current directory. You must be inside a gym project directory to use most `gym` commands.
 
 ### Creating New Workouts
 
@@ -86,7 +86,7 @@ Gym uses a JSON config file to store settings. The config file will be automatic
 - `workoutDir`: (string) The directory where workout files are saved. Defaults to `workouts`.
 - `unitSystem`: ("imperial" | "metric") The unit system to use. Defaults to `imperial`.
 - `e1rmFormula`: ("brzycki" | "epley") The formula to use for calculating estimated one rep max. Defaults to `brzycki`.
-- `afterSaveGitAction`: ("commit" | "commit-push" | "none") The action to take after saving a workout. Defaults to `none`.
+- `afterSaveGitAction`: ("commit" | "commit-push" | "none") The action to take after saving a workout. Note that upstream must be set in your git config for `commit-push` to work. Defaults to `none`.
 - `locale`: (string) The locale to use for date formatting. Defaults to `en-US`.
 
 ### Database Management

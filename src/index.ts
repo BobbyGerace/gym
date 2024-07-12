@@ -8,14 +8,16 @@ import { ExerciseController } from "./controllers/exercise";
 import { CalcController } from "./controllers/calc";
 import { logger } from "./lib/logger";
 import { InitController } from "./controllers/init";
+import { cdToGymRoot } from "./lib/findGymRoot";
+
+const isInsideGymDir = cdToGymRoot();
 
 const config = getConfig();
 const program = new Command();
 
 program.version("1.0.0");
 
-// Handle errors better, and make the types play nice
-function route<T extends (...args: any) => any>(
+function routeAllowAnywhere<T extends (...args: any) => any>(
   fn: T
 ): (...args: Parameters<T>) => void {
   return (async (...args: any) => {
@@ -28,13 +30,31 @@ function route<T extends (...args: any) => any>(
   }) as any;
 }
 
+function route<T extends (...args: any) => any>(
+  fn: T
+): (...args: Parameters<T>) => void {
+  return (async (...args: any) => {
+    if (!isInsideGymDir) {
+      logger.error("You must be inside a gym directory to run this command.");
+      logger.error("Use `gym init` to create a new gym directory.");
+      process.exit(1);
+    }
+
+    try {
+      await fn(...args);
+    } catch (e) {
+      if (e instanceof Error) logger.error("ERROR: " + e.message);
+      process.exit(1);
+    }
+  }) as any;
+}
 let stdin = "";
 
 const initController = new InitController(config);
 program
   .command("init")
   .description("Initialize the database and config file.")
-  .action(route(initController.init));
+  .action(routeAllowAnywhere(initController.init));
 
 const exercise = program.command("exercise").alias("ex");
 const exerciseController = new ExerciseController(config);
@@ -152,14 +172,14 @@ calc
   .description(
     "Calculate the estimated 1RM for a given set. Use the same syntax as in a workout file. e.g., 100x5@8"
   )
-  .action(route(calcController.e1rm));
+  .action(routeAllowAnywhere(calcController.e1rm));
 
 calc
   .command("convert <fromSet> <toSet>")
   .description(
     "Using the e1rm from the fromSet, find expected weight, reps, or rpe of the toSet. It will calculate the missing parameter. For example, 185x8@8 x6@8 will output 198.7"
   )
-  .action(route(calcController.convertRpe));
+  .action(routeAllowAnywhere(calcController.convertRpe));
 
 if (process.stdin.isTTY) {
   program.parse(process.argv);

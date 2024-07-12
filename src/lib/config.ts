@@ -32,8 +32,8 @@ let cachedConfig: Config | null = null;
 
 // Gets the file './gymconfig.json' in the current directory
 // and parses it as JSON, merging it with the default config.
-export const getConfig = (): Config => {
-  if (cachedConfig) return cachedConfig;
+export const getConfig = (noCache = false): Config => {
+  if (!noCache && cachedConfig) return cachedConfig;
 
   const configPath = path.join(process.cwd(), "gymconfig.json");
   let config: Config = defaultConfig;
