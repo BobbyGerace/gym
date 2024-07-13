@@ -32,7 +32,7 @@ export class WorkoutController {
         throw new Error("Number is invalid");
       }
 
-      const workouts = await persist.listWorkouts(number, options.name);
+      const workouts = await persist.listWorkouts(number ?? null, options.name);
       const workoutsWithFullPath = workouts.map((workout) => {
         return {
           ...workout,

@@ -69,7 +69,7 @@ export class ExerciseController {
 
   history = async (
     exName: string,
-    options: { locationsOnly: boolean; number: number }
+    options: { locationsOnly: boolean; number?: string }
   ) => {
     await Database.open(this.config.databaseFile, async (db) => {
       const exercise = new Exercise(this.config, db);
@@ -78,7 +78,10 @@ export class ExerciseController {
         throw new Error(`Exercise not found: ${exName}`);
       }
 
-      const history = await exercise.getHistory(ex.id, options.number);
+      const history = await exercise.getHistory(
+        ex.id,
+        options.number ? parseInt(options.number) : null
+      );
 
       if (options.locationsOnly) {
         history.forEach((h) =>

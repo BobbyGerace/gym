@@ -143,6 +143,18 @@ export class Database {
     });
   }
 
+  async withTransaction<T>(fn: (db: Database) => Promise<T>): Promise<T> {
+    await this.query("BEGIN TRANSACTION;");
+    try {
+      const result = await fn(this);
+      await this.query("COMMIT;");
+      return result;
+    } catch (e) {
+      await this.query("ROLLBACK;");
+      throw e;
+    }
+  }
+
   static singleQuery<T>(file: string, sql: string, args?: any[]): Promise<T[]> {
     return Database.open(file, (db) => db.query(sql, args));
   }

@@ -174,7 +174,7 @@ export class PersistWorkout {
   }
 
   async listWorkouts(
-    num?: number,
+    num: number | null,
     name?: string
   ): Promise<WorkoutHistoryItem[]> {
     const limit = num ? `LIMIT ${num}` : "";

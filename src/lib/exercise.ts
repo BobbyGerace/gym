@@ -24,19 +24,52 @@ export class Exercise {
   }
 
   async rename(id: number, newName: string) {
-    await this.db.query("update exercise set name = ? where id = ?;", [
-      newName,
-      id,
-    ]);
+    await this.db.withTransaction(async () => {
+      // Update workout.updated_at for all the workouts that contain this exercise
+      // This is necessary to prevent a database sync
+      await this.db.query(
+        `
+        update workout
+        set updated_at = datetime('now')
+        where id in (
+          select workout_id
+          from exercise_instance
+          where exercise_id = ?
+        );
+      `,
+        [id]
+      );
+      await this.db.query("update exercise set name = ? where id = ?;", [
+        newName,
+        id,
+      ]);
+    });
   }
 
   async merge(fromId: number, intoId: number) {
-    await this.db.query(
-      "update exercise_instance set exercise_id = ? where exercise_id = ?;",
-      [intoId, fromId]
-    );
+    await this.db.withTransaction(async () => {
+      // Update workout.updated_at for all the workouts that contain this exercise
+      // This is necessary to prevent a database sync
+      await this.db.query(
+        `
+        update workout
+        set updated_at = datetime('now')
+        where id in (
+          select workout_id
+          from exercise_instance
+          where exercise_id = ?
+        );
+      `,
+        [fromId]
+      );
 
-    await this.db.query("delete from exercise where id = ?;", [fromId]);
+      await this.db.query(
+        "update exercise_instance set exercise_id = ? where exercise_id = ?;",
+        [intoId, fromId]
+      );
+
+      await this.db.query("delete from exercise where id = ?;", [fromId]);
+    });
   }
 
   async getExerciseByName(name: string): Promise<ExerciseRow | null> {
@@ -94,7 +127,8 @@ export class Exercise {
     return results;
   }
 
-  async getHistory(exId: number, num = 10) {
+  async getHistory(exId: number, num: number | null = null) {
+    const limit = num && !isNaN(num) ? `limit ${num}` : "";
     return await this.db.query<{
       lineStart: number;
       lineEnd: number;
@@ -111,9 +145,9 @@ export class Exercise {
         inner join workout w on w.id = ei.workout_id
       where ei.exercise_id = ?
       order by w.workout_date desc
-      limit ?;
+      ${limit};
     `,
-      [exId, num]
+      [exId]
     );
   }
 

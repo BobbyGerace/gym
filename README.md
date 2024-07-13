@@ -48,6 +48,10 @@ date: Sat Jul 6 2024
 
 Workouts also support supersets, comments, RPE, and arbitrary metadata for sets. See [Syntax](syntax.md) for more information.
 
+#### A Note on Exercise Names
+
+Exercises are case insensitive and may contain any character. Upon saving a workout, exercises will be matched to existing exercises in the database. If a match is found, the existing exercise will be updated with the new data. If no match is found, a new exercise will be created. It is helpful to have an autocomplete feature in your editor to avoid creating duplicate exercises.
+
 ### History and PRs
 
 You can view your recent history for a given exercise with `gym exercise history <exerciseName>`.
