@@ -71,7 +71,7 @@ hello: world
         const consoleSpy = jest.spyOn(console, "log").mockImplementation();
         const wc = new WorkoutController(testConfig);
         await wc.save(["workouts/2023-09-24.gym", "workouts/2023-09-26.gym"]);
-        await wc.history({ number: "10", fileNameOnly: true });
+        await wc.history({ number: "10", locationsOnly: true });
         expect(consoleSpy).toHaveBeenCalledWith(
           "workouts/2023-09-26.gym\nworkouts/2023-09-24.gym"
         );

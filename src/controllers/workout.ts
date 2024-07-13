@@ -21,9 +21,10 @@ export class WorkoutController {
   history = async (options: {
     number?: string;
     name?: string;
-    fileNameOnly?: boolean;
+    locationsOnly?: boolean;
     json?: boolean;
     prettyPrint?: boolean;
+    fullPath?: boolean;
   }) => {
     await Database.open(this.config.databaseFile, async (db) => {
       const persist = new PersistWorkout(db, this.config);
@@ -34,15 +35,21 @@ export class WorkoutController {
 
       const workouts = await persist.listWorkouts(number ?? null, options.name);
       const workoutsWithFullPath = workouts.map((workout) => {
+        const pathArgs = options.fullPath ? [process.cwd()] : [];
+
         return {
           ...workout,
-          fileName: path.join(this.config.workoutDir, workout.fileName),
+          fileName: path.join(
+            ...pathArgs,
+            this.config.workoutDir,
+            workout.fileName
+          ),
         };
       });
 
       if (options.json) {
         logger.log(toJson(workoutsWithFullPath, options.prettyPrint));
-      } else if (options.fileNameOnly) {
+      } else if (options.locationsOnly) {
         logger.log(workoutsWithFullPath.map((w) => w.fileName).join("\n"));
       } else {
         logger.log(

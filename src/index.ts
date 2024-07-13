@@ -83,6 +83,7 @@ exercise
   .command("history <exerciseName>")
   .option("-n, --number <number>", "number of items to find")
   .option("-l, --locations-only", "Only print the file names and line numbers")
+  .option("-f, --full-path", "Show the full path of the file")
   .description("List recent history for a given exercise")
   .action(route(exerciseController.history));
 
@@ -136,7 +137,7 @@ workout
   .command("history")
   .option("-n, --number <number>", "Number of workouts to list")
   .option("-N, --name <name>", "Only show workouts matching the name")
-  .option("-f, --file-name-only", "Only show the file names")
+  .option("-l, --locations-only", "Only show the file locations")
   .option(
     "-p, --pretty-print",
     "Pretty print the JSON output instead of minifying it"
@@ -145,6 +146,7 @@ workout
     "-j, --json",
     "Print workout history as JSON instead of a human readable format"
   )
+  .option("-f, --full-path", "Show the full path of the file")
   .description("List the recent history of workouts in the databases")
   .action(route(workoutController.history));
 
@@ -162,7 +164,7 @@ workout
     "Tries to parse a file and outputs JSON. Can also read workout from stdin"
   )
   .action((fileName, options) =>
-    route(workoutController.parse)(options, fileName, stdin)
+    routeAllowAnywhere(workoutController.parse)(options, fileName, stdin)
   );
 
 const calc = program.command("calc").alias("c");

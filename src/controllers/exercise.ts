@@ -69,7 +69,7 @@ export class ExerciseController {
 
   history = async (
     exName: string,
-    options: { locationsOnly: boolean; number?: string }
+    options: { locationsOnly: boolean; number?: string; fullPath?: boolean }
   ) => {
     await Database.open(this.config.databaseFile, async (db) => {
       const exercise = new Exercise(this.config, db);
@@ -85,7 +85,9 @@ export class ExerciseController {
 
       if (options.locationsOnly) {
         history.forEach((h) =>
-          logger.log(`${this.relativePath(h.fileName)}:${h.lineStart}`)
+          logger.log(
+            `${this.relativePath(h.fileName, options.fullPath)}:${h.lineStart}`
+          )
         );
       } else {
         if (history.length === 0) {
@@ -159,8 +161,9 @@ export class ExerciseController {
     });
   };
 
-  private relativePath(fileName = "") {
-    return path.join(this.config.workoutDir, fileName);
+  private relativePath(fileName = "", fullPath = false) {
+    const pathArgs = fullPath ? [process.cwd()] : [];
+    return path.join(...pathArgs, this.config.workoutDir, fileName);
   }
 }
 
