@@ -57,6 +57,8 @@ export class PersistWorkout {
     workoutId: number,
     exercises: Exercise[]
   ): Promise<number[]> {
+    if (exercises.length === 0) return [];
+
     const exerciseNames = exercises.map((exercise) => exercise.name);
     const existingExerciseRows = await this.db.query<{
       id: number;
@@ -113,14 +115,17 @@ export class PersistWorkout {
       exerciseArgs.flat()
     );
 
-    exercisesWithIds.forEach((exercise, i) => {
-      this.saveSets(rows[i].id, exercise.sets);
-    });
+    for (let i = 0; i < exercisesWithIds.length; i++) {
+      const exercise = exercisesWithIds[i];
+      await this.saveSets(rows[i].id, exercise.sets);
+    }
 
     return rows.map((row) => row.id);
   }
 
   async saveSets(exerciseInstanceId: number, sets: Set[]): Promise<number[]> {
+    if (sets.length === 0) return [];
+
     const flatSets = flattenSets(sets);
 
     const setArgs = flatSets.flatMap((set) => {
