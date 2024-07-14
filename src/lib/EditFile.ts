@@ -49,7 +49,8 @@ export class EditFile {
     }
 
     const fileContents = fs.readFileSync(this.filePath, "utf-8");
-    const { result, errors } = parse(fileContents);
+    const result = parse(fileContents);
+    const { errors } = result;
     if (errors.length) {
       this.printErrors(errors, fileContents);
       return this.promptToHandleErrors(errors);

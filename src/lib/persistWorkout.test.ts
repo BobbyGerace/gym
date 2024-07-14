@@ -4,7 +4,8 @@ import { parse } from "./parser";
 import { PersistWorkout } from "./persistWorkout";
 
 const parseWorkout = (input: string) => {
-  const { result, errors } = parse(input);
+  const result = parse(input);
+  const { errors } = result;
   if (errors.length > 0) {
     throw new Error(errors[0].message);
   }

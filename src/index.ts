@@ -151,14 +151,14 @@ workout
   .action(route(workoutController.history));
 
 workout
-  .command("parse <fileName>")
+  .command("parse [fileName]")
   .option(
     "-p, --pretty-print",
     "Pretty print the JSON output instead of minifying it"
   )
   .option(
-    "-j, --json-errors",
-    "Instead of printing errors, output them as JSON"
+    "-s, --strict",
+    "Fail and print error messages if any errors are encountered. By default, errors are included in the JSON response."
   )
   .description(
     "Tries to parse a file and outputs JSON. Can also read workout from stdin"

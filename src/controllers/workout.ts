@@ -128,20 +128,21 @@ export class WorkoutController {
   };
 
   parse = (
-    options: { jsonErrors?: boolean; prettyPrint?: boolean },
+    options: { strict?: boolean; prettyPrint?: boolean },
     fileName?: string,
     stdin?: string
   ) => {
     const fileContents =
       (fileName ? fs.readFileSync(fileName, "utf-8") : stdin) ?? "";
 
-    const { result, errors } = parse(fileContents);
+    const result = parse(fileContents);
+    const { errors } = result;
 
-    if (errors.length > 0 && options.jsonErrors) {
-      logger.log(toJson(errors, options.prettyPrint));
+    if (errors.length > 0 && options.strict) {
+      this.printErrors(errors, fileContents);
       process.exit(1);
     } else if (errors.length > 0) {
-      this.printErrors(errors, fileContents);
+      logger.log(toJson(result, options.prettyPrint));
       process.exit(1);
     } else {
       logger.log(toJson(result, options.prettyPrint));

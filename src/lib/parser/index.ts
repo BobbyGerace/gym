@@ -7,9 +7,7 @@ import { SetParser } from "./SetParser";
 export { Exercise, Workout, FrontMatter, Set, Tag, Time } from "./ast";
 export { ParseError } from "./parserState";
 
-export const parse = (
-  workout: string
-): { result: Workout; errors: ParseError[] } => {
+export const parse = (workout: string): Workout & { errors: ParseError[] } => {
   const state = new ParserState(workout);
   const frontMatterParser = new FrontMatterParser(state);
   const exerciseParser = new ExerciseParser(state);
@@ -57,18 +55,17 @@ export const parse = (
     exercises,
   };
 
-  return { result, errors: state.errors };
+  return { ...result, errors: state.errors };
 };
 
 const formatError = (error: ParseError): string => {
   return `Parse error ${error.line}:${error.col}: ${error.message}`;
 };
 
-// TODO: Replace all usages of this with better error handling
 export const parseOrThrow = (workout: string): Workout => {
-  const { result, errors } = parse(workout);
-  if (errors.length > 0) {
-    throw new Error(errors.map(formatError).join("\n"));
+  const result = parse(workout);
+  if (result.errors.length > 0) {
+    throw new Error(result.errors.map(formatError).join("\n"));
   }
   return result;
 };
