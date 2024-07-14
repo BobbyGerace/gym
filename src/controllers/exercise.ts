@@ -1,6 +1,6 @@
 import { Config } from "../lib/config";
 import { Database } from "../lib/database";
-import { Exercise } from "../lib/exercise";
+import { Exercise, RepMax } from "../lib/exercise";
 import { formatDate } from "../lib/util";
 import fs from "fs";
 import path from "path";
@@ -136,15 +136,24 @@ export class ExerciseController {
 
       const prs = await exercise.getRepMaxPrs(ex.id, options.exact);
 
+      const prsWithPath = prs.map((pr: RepMax) => {
+        const fullPath = path.join(
+          process.cwd(),
+          this.config.workoutDir,
+          pr.fileName
+        );
+        return { ...pr, filePath: fullPath };
+      });
+
       const defaultWeightUnit =
         this.config.unitSystem === "metric" ? "kg" : "lb";
 
       if (options.json) {
-        logger.log(toJson(prs, options.prettyPrint));
+        logger.log(toJson(prsWithPath, options.prettyPrint));
         return;
       }
 
-      prs.forEach((pr) => {
+      prsWithPath.forEach((pr) => {
         const unit = pr.weightUnit ?? defaultWeightUnit;
         const rm = `${pr.reps}RM: ${
           unit === "bw" ? "Bodyweight" : pr.weight + unit

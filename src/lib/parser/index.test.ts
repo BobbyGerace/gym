@@ -30,6 +30,7 @@ describe("parseWorkout", () => {
    `);
   test("parseWorkout should parse document", () => {
     expect(parseWorkout(happyPath)).toEqual({
+      errors: [],
       frontMatter: {
         name: "Hello world",
         date: "2020-01-01",
@@ -97,6 +98,7 @@ describe("parseWorkout", () => {
   `);
   test("parseWorkout should parse document without frontmatter", () => {
     expect(parseWorkout(withoutFrontMatter)).toEqual({
+      errors: [],
       frontMatter: {},
       exercises: [
         {
@@ -154,6 +156,7 @@ describe("parseWorkout", () => {
   `);
   test("parseWorkout should parse document without exercises", () => {
     expect(parseWorkout(withoutExercises)).toEqual({
+      errors: [],
       frontMatter: {
         name: "Hello world",
         date: "2020-01-01",
@@ -165,6 +168,7 @@ describe("parseWorkout", () => {
   const emptyDocument = newState(``);
   test("parseWorkout should parse empty document", () => {
     expect(parseWorkout(emptyDocument)).toEqual({
+      errors: [],
       frontMatter: {},
       exercises: [],
     });
@@ -199,6 +203,7 @@ describe("parseWorkout", () => {
   test("parseWorkout should parse with comments and empty lines", () => {
     const result = parseWorkout(withCommentsAndWhitespace);
     expect(result).toEqual({
+      errors: [],
       frontMatter: {
         name: "Hello world",
         date: "2020-01-01",

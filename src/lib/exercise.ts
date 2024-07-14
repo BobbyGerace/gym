@@ -11,7 +11,8 @@ export type RepMax = {
   weight: number;
   weightUnit: string;
   workoutId: number;
-  fileName: number;
+  lineStart: number;
+  fileName: string;
 };
 
 export class Exercise {
@@ -102,7 +103,8 @@ export class Exercise {
           s.weight_value as weight,
           s.weight_unit as weightUnit,
           w.id as workoutId,
-          w.file_name as fileName
+          w.file_name as fileName,
+          ei.line_start as lineStart
         from "set" s 
           inner join exercise_instance ei on ei.id = s.exercise_instance_id
           inner join exercise e on e.id = ei.exercise_id

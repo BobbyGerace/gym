@@ -136,9 +136,9 @@ export class PersistWorkout {
       else if (typeof set.weight === "number") weightValue = set.weight;
       else if (typeof set.weight === "object") weightValue = set.weight.value;
 
-      let weightUnit: string | null = null;
+      let weightUnit: string = defaultWeightUnit;
       if (set.weight === "bw") weightUnit = "bw";
-      else if (typeof set.weight === "number") weightUnit = null;
+      else if (typeof set.weight === "number") weightUnit = defaultWeightUnit;
       else if (typeof set.weight === "object")
         weightUnit = set.weight.unit ?? defaultWeightUnit;
 

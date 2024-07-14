@@ -82,8 +82,9 @@ export class CalcController {
 
     const { weight, reps, rpe } = result;
 
+    const maxReps = reps && Math.max(...reps);
     return {
-      reps: reps?.[0] ? this.adjustReps(reps[0], rpe) : null,
+      reps: maxReps ? this.adjustReps(maxReps, rpe) : null,
       weight: this.extractWeight(weight),
       rpe,
     };

@@ -42,7 +42,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-06",
         fileName: "2023-08-06.gym",
         weight: 500,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 6,
       },
       {
@@ -51,7 +52,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-05",
         fileName: "2023-08-05.gym",
         weight: 405,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 5,
       },
       {
@@ -60,7 +62,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-05",
         fileName: "2023-08-05.gym",
         weight: 405,
-        weightUnit: null,
+        lineStart: 1,
+        weightUnit: "lb",
         workoutId: 5,
       },
       {
@@ -69,7 +72,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-03",
         fileName: "2023-08-03.gym",
         weight: 365,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 3,
       },
       {
@@ -78,7 +82,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-03",
         fileName: "2023-08-03.gym",
         weight: 365,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 3,
       },
       {
@@ -87,7 +92,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-02",
         fileName: "2023-08-02.gym",
         weight: 335,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 2,
       },
       {
@@ -96,7 +102,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-02",
         fileName: "2023-08-02.gym",
         weight: 335,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 2,
       },
       {
@@ -105,7 +112,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-02",
         fileName: "2023-08-02.gym",
         weight: 335,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 2,
       },
       {
@@ -114,7 +122,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-01",
         fileName: "2023-08-01.gym",
         weight: 315,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 1,
       },
       {
@@ -123,7 +132,8 @@ test("getRepMaxPrs should get all rep max prs for an exercise", async () => {
         date: "2023-08-01",
         fileName: "2023-08-01.gym",
         weight: 315,
-        weightUnit: null,
+        weightUnit: "lb",
+        lineStart: 1,
         workoutId: 1,
       },
     ]);
