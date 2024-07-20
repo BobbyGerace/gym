@@ -1,5 +1,5 @@
 {
-  "name": "gym",
+  "name": "gym-cli",
   "version": "1.0.0",
   "description": "A command-line utility to work with text-based workout logs",
   "main": "src/index.ts",
@@ -18,7 +18,7 @@
     "type": "git",
     "url": "git+https://github.com/BobbyGerace/gym.git"
   },
-  "author": "",
+  "author": "Bobby Gerace",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/BobbyGerace/gym/issues"
