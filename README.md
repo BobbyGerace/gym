@@ -4,6 +4,14 @@ A command line tool and language for logging workouts.
 
 ## Installation
 
+### From NPM
+
+```sh
+npm install -g gym-cli
+```
+
+### From Source
+
 1. Clone this repository and cd into it
 2. `npm install`
 3. `npm run build`
