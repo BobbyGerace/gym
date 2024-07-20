@@ -127,8 +127,8 @@ export class EditFile {
       c: async () => process.exit(0),
       s: async () => {
         const workoutId = await this.saveWorkout(ast);
-        if (afterSaveGitAction === "commit") {
-          await this.gitCommitAndPush();
+        if (["commit", "commit-push"].includes(afterSaveGitAction)) {
+          await this.gitCommit(afterSaveGitAction === "commit-push");
         }
 
         await this.printPrs(ast, workoutId);
@@ -189,7 +189,7 @@ export class EditFile {
     return fs.existsSync(path.join(process.cwd(), ".git"));
   }
 
-  private async gitCommitAndPush() {
+  private async gitCommit(andPush: boolean) {
     if (!this.isGitRepo()) {
       logger.log("Not a git repository. Skipping commit and push.");
       return;
@@ -202,6 +202,9 @@ export class EditFile {
         "-m",
         `Add new workout: ${this.fileName}`,
       ]);
+      if (andPush) {
+        await this.runCommand("git", ["push"]);
+      }
       await this.runCommand("git", ["push"]);
     } catch {
       logger.error("Error committing and pushing to git.");

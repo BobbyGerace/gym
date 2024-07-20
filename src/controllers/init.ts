@@ -12,7 +12,7 @@ export class InitController {
 
   init = async () => {
     if (!fs.existsSync("gymconfig.json")) {
-      fs.writeFileSync("gymconfig.json", toJson(defaultConfig));
+      fs.writeFileSync("gymconfig.json", toJson(defaultConfig, true));
       logger.log("Created gymconfig.json");
     } else {
       logger.log("gymconfig.json already exists. Skipping creation.");

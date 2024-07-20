@@ -222,7 +222,7 @@ const insertIntoFrontMatter = (fileContents: string, lines: string) => {
     return (
       fileContents.slice(0, match.value.index) +
       lines +
-      fileContents.slice(match.value.index + 1)
+      fileContents.slice(match.value.index)
     );
   }
 
