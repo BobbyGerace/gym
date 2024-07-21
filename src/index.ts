@@ -15,7 +15,7 @@ const isInsideGymDir = cdToGymRoot();
 const config = getConfig();
 const program = new Command();
 
-program.version("1.0.0");
+program.version("1.0.3");
 
 function routeAllowAnywhere<T extends (...args: any) => any>(
   fn: T

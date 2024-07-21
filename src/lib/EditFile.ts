@@ -218,10 +218,13 @@ export class EditFile {
 
     for (const e of ast.exercises) {
       const ex = await exercise.getExerciseByName(e.name);
-      if (ex === null) return;
+      if (ex === null) continue;
+
       const prs = await exercise.getRepMaxPrs(ex.id, true);
       const newPrs = prs.filter((pr) => pr.workoutId === workoutId);
-      exercisesWithPrs.push({ exerciseName: ex.name, prs: newPrs });
+      if (newPrs.length !== 0) {
+        exercisesWithPrs.push({ exerciseName: ex.name, prs: newPrs });
+      }
     }
 
     if (exercisesWithPrs.length === 0) return;

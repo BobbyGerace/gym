@@ -1,6 +1,6 @@
 {
   "name": "gym-cli",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "A command-line utility to work with text-based workout logs",
   "main": "src/index.ts",
   "bin": {
