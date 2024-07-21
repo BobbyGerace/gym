@@ -2,6 +2,8 @@
 
 A command line tool and language for logging workouts.
 
+![Recording 2024-07-21 at 10 33 40](https://github.com/user-attachments/assets/bb157991-f981-428a-aa63-faef1fce4888)
+
 ## Installation
 
 ### From NPM
