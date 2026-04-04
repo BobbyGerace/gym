@@ -15,7 +15,7 @@ const isInsideGymDir = cdToGymRoot();
 const config = getConfig();
 const program = new Command();
 
-program.version("1.0.3");
+program.version("1.0.4");
 
 function routeAllowAnywhere<T extends (...args: any) => any>(
   fn: T
@@ -118,9 +118,9 @@ workout
   .option("-d, --date <date>", "Specify a date (YYYY-MM-DD)")
   .option("-n, --name <name>", "Specify a name for the workout")
   .description(
-    "Interactive command that creates a new file and opens it in an editor. Upon saving, parses the file and optionally saves to the database. Can also read the file contents from stdin."
+    "Interactive command that creates a new file and opens it in an editor. Upon saving, parses the file and optionally saves to the database."
   )
-  .action((options) => route(workoutController.new)(options, stdin));
+  .action((options) => route(workoutController.new)(options));
 
 workout
   .command("edit <fileName>")

@@ -78,10 +78,11 @@ export class WorkoutController {
     });
   };
 
-  new = async (
-    options: { template?: string; date?: string; name?: string },
-    stdin: string
-  ) => {
+  new = async (options: {
+    template?: string;
+    date?: string;
+    name?: string;
+  }) => {
     // Make sure the database is healthy
     await Database.open(this.config.databaseFile, async (db) => {
       if (await changedFilesPrompt(this.config, db)) {
@@ -91,7 +92,7 @@ export class WorkoutController {
       const workoutDate = date ?? dateToYMD(new Date());
       const fileName = this.fileNameFromDateAndName(workoutDate, name);
 
-      let fileContents = template ? getFileFromTemplate(template) : stdin;
+      let fileContents = template ? getFileFromTemplate(template) : "";
 
       fileContents = this.setFrontMatter(fileContents, workoutDate, name);
 
@@ -186,15 +187,16 @@ export class WorkoutController {
   }
 
   private setFrontMatter(fileContents: string, date: string, name?: string) {
-    const nameLine = name ? `name: ${name}\n` : "";
-    const dateLine = `date: ${formatDate(date, this.config.locale)}\n`;
     let result = fileContents;
 
-    // Delete the lines if they already exist, so we can re-add them without dups
-    result = fileContents.replace(/^\s*date\s*:.*$/gm, "");
-    if (name) {
-      result = fileContents.replace(/^\s*name\s*:.*$/gm, "");
-    }
+    // Only add the line if it doesn't already exist
+    const hasDateLine = fileContents.match(/^\s*date\s*:.*$/gm);
+    const hasNameLine = fileContents.match(/^\s*name\s*:.*$/gm);
+
+    const nameLine = name && !hasNameLine ? `name: ${name}\n` : "";
+    const dateLine = !hasDateLine
+      ? `date: ${formatDate(date, this.config.locale)}\n`
+      : "";
 
     return insertIntoFrontMatter(result, nameLine + dateLine);
   }

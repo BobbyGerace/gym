@@ -35,7 +35,15 @@ Create a new directory for your project and cd into it. Run `gym init` to create
 
 Workout files are saved as `.gym` files in the `workouts` directory by default. Rather than creating the files manually, it's recommended that you use the `gym workout new` command. This command will create the file for you and open your editor. Afterwards the file will be saved to the database.
 
-`gym workout new` can also create files from templates, or read from stdin. See `gym workout new --help` for more information.
+`gym workout new` can also create files from templates.
+
+```sh
+# From an existing file
+gym workout new --template templates/upper-body.gym
+
+# You can also generate programs dynamically by using process substitution
+gym workout new --template <(./my-531-generator --week 1 --training-max 225)
+```
 
 ### Workout Syntax
 
